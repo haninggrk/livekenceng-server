@@ -11,6 +11,11 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Fallback login route alias used by framework redirections
+Route::get('/login', function () {
+    return redirect()->route('admin.login');
+})->name('login');
+
 // Admin authentication routes
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('admin.login');
