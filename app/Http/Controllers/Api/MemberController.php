@@ -138,15 +138,7 @@ class MemberController extends Controller
             ], 400);
         }
 
-        $member = Member::where('email', $request->email)->first();
-
-        if (!$member) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found'
-            ], 404);
-        }
-
+        // Validate license key first
         $licenseKey = \App\Models\LicenseKey::where('code', $request->license_key)->first();
 
         if (!$licenseKey) {
@@ -163,16 +155,32 @@ class MemberController extends Controller
             ], 400);
         }
 
-        // Calculate new expiry date
-        $currentExpiry = $member->expiry_date && $member->expiry_date->isFuture() 
-            ? $member->expiry_date 
-            : now();
+        // Check if member exists, if not create new one
+        $member = Member::where('email', $request->email)->first();
+        $isNewMember = false;
+        $generatedPassword = null;
 
-        $newExpiry = $currentExpiry->addDays($licenseKey->duration_days);
+        if (!$member) {
+            // Create new member with random password
+            $generatedPassword = \Illuminate\Support\Str::random(12);
+            $member = Member::create([
+                'email' => $request->email,
+                'password' => Hash::make($generatedPassword),
+                'expiry_date' => now()->addDays($licenseKey->duration_days),
+            ]);
+            $isNewMember = true;
+        } else {
+            // Calculate new expiry date for existing member
+            $currentExpiry = $member->expiry_date && $member->expiry_date->isFuture() 
+                ? $member->expiry_date 
+                : now();
 
-        // Update member
-        $member->expiry_date = $newExpiry;
-        $member->save();
+            $newExpiry = $currentExpiry->addDays($licenseKey->duration_days);
+            
+            // Update member
+            $member->expiry_date = $newExpiry;
+            $member->save();
+        }
 
         // Mark license as used
         $licenseKey->is_used = true;
@@ -180,11 +188,22 @@ class MemberController extends Controller
         $licenseKey->used_at = now();
         $licenseKey->save();
 
-        return response()->json([
+        $response = [
             'success' => true,
-            'message' => 'License key redeemed successfully',
-            'expiry_date' => $newExpiry->toIso8601String(),
-            'days_added' => $licenseKey->duration_days
-        ]);
+            'message' => $isNewMember 
+                ? 'New account created and license activated successfully' 
+                : 'License key redeemed successfully',
+            'expiry_date' => $member->expiry_date->toIso8601String(),
+            'days_added' => $licenseKey->duration_days,
+            'is_new_member' => $isNewMember,
+        ];
+
+        // Include generated password for new members
+        if ($isNewMember) {
+            $response['password'] = $generatedPassword;
+            $response['email'] = $member->email;
+        }
+
+        return response()->json($response);
     }
 }

@@ -237,7 +237,7 @@ Content-Type: application/json
 
 ### 4. Redeem License Key
 
-Redeem a license key to extend or activate subscription.
+Redeem a license key to extend or activate subscription. If the email does not exist, a new member will be automatically created and the license duration applied. The generated temporary password will be returned in the response for first-time users.
 
 **Endpoint:** `POST /api/members/redeem-license`
 
@@ -260,7 +260,21 @@ Content-Type: application/json
   "success": true,
   "message": "License key redeemed successfully",
   "expiry_date": "2025-11-21T12:00:00+00:00",
-  "days_added": 7
+  "days_added": 7,
+  "is_new_member": false
+}
+```
+
+**Success Response (New Member Created - 200 OK):**
+```json
+{
+  "success": true,
+  "message": "New account created and license activated successfully",
+  "expiry_date": "2025-11-21T12:00:00+00:00",
+  "days_added": 7,
+  "is_new_member": true,
+  "email": "user@example.com",
+  "password": "TEMP-PASS-123"
 }
 ```
 
@@ -274,13 +288,7 @@ Content-Type: application/json
 }
 ```
 
-*User Not Found (404 Not Found):*
-```json
-{
-  "success": false,
-  "message": "User not found"
-}
-```
+Note: If the user does not exist, the API will create one automatically and return a temporary password.
 
 *Invalid License Key (404 Not Found):*
 ```json
