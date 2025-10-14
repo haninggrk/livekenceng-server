@@ -473,6 +473,9 @@
         const btn = document.getElementById('tab-' + tab);
         btn.classList.add('active', 'border-primary-500', 'text-primary-600');
         btn.classList.remove('border-transparent', 'text-gray-500');
+
+        // Persist selected tab so reloads stay on the same tab
+        try { localStorage.setItem('adminActiveTab', tab); } catch (e) {}
     }
 
     // Member Management
@@ -828,6 +831,16 @@
                 alert(Object.values(data.errors).flat().join('\n'));
             }
         });
+    });
+
+    // Restore the last active tab on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const saved = localStorage.getItem('adminActiveTab');
+            if (saved && document.getElementById('tab-' + saved)) {
+                switchTab(saved);
+            }
+        } catch (e) {}
     });
 </script>
 @endpush
