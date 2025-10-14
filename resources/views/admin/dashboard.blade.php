@@ -224,71 +224,47 @@
                 </div>
             </div>
 
-            <!-- Pricing Tab -->
+            <!-- Pricing/Plans Tab -->
             <div id="content-pricing" class="tab-content p-6 hidden">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">License Pricing Configuration</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">1 Day License</h3>
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Base Price (Rp)</label>
-                            <input type="number" id="price_1" value="10000" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500">
-                        </div>
-                        <button onclick="updatePrice(1)" class="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
-                            Update Price
-                        </button>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">3 Days License</h3>
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Base Price (Rp)</label>
-                            <input type="number" id="price_3" value="25000" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500">
-                        </div>
-                        <button onclick="updatePrice(3)" class="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
-                            Update Price
-                        </button>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">7 Days License</h3>
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Base Price (Rp)</label>
-                            <input type="number" id="price_7" value="40000" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500">
-                        </div>
-                        <button onclick="updatePrice(7)" class="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
-                            Update Price
-                        </button>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">14 Days License</h3>
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Base Price (Rp)</label>
-                            <input type="number" id="price_14" value="70000" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500">
-                        </div>
-                        <button onclick="updatePrice(14)" class="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
-                            Update Price
-                        </button>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">30 Days License</h3>
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Base Price (Rp)</label>
-                            <input type="number" id="price_30" value="139000" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500">
-                        </div>
-                        <button onclick="updatePrice(30)" class="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
-                            Update Price
-                        </button>
-                    </div>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">License Plans</h2>
+                    <button onclick="openAddPlanModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                        + Add Plan
+                    </button>
                 </div>
 
-                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <p class="text-sm text-blue-800">
-                        <strong>Note:</strong> These are base prices. Resellers will pay based on their discount percentage.
-                    </p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (Rp)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="plansTableBody">
+                            @foreach($plans as $plan)
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $plan->name ?? '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $plan->duration_days }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ number_format($plan->price, 0, ',', '.') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($plan->is_active)
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                    @else
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="editPlan({{ $plan->id }})" class="text-primary-600 hover:text-primary-900 mr-3">Edit</button>
+                                    <button onclick="deletePlan({{ $plan->id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -341,13 +317,11 @@
         <h3 class="text-2xl font-bold text-gray-900 mb-6">Generate License Keys</h3>
         <form id="licenseForm">
             <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Duration</label>
-                <select id="licenseDuration" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                    <option value="1">1 Day</option>
-                    <option value="3">3 Days</option>
-                    <option value="7">7 Days</option>
-                    <option value="14">14 Days</option>
-                    <option value="30">30 Days</option>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Plan</label>
+                <select id="licensePlanId" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    @foreach($plans as $plan)
+                    <option value="{{ $plan->id }}">{{ $plan->name ?? ($plan->duration_days . ' Day') }} - Rp {{ number_format($plan->price, 0, ',', '.') }}</option>
+                    @endforeach
                 </select>
             </div>
 
@@ -430,6 +404,48 @@
                     Add Balance
                 </button>
                 <button type="button" onclick="closeBalanceModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add/Edit Plan Modal -->
+<div id="planModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+        <h3 id="planModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Plan</h3>
+        <form id="planForm">
+            <input type="hidden" id="planId">
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Name (optional)</label>
+                <input type="text" id="planName" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Duration (days)</label>
+                <input type="number" id="planDays" min="1" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Price (Rp)</label>
+                <input type="number" id="planPrice" min="0" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Active</label>
+                <select id="planActive" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Save
+                </button>
+                <button type="button" onclick="closePlanModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
                     Cancel
                 </button>
             </div>
@@ -587,7 +603,7 @@
         e.preventDefault();
         
         const data = {
-            duration_days: document.getElementById('licenseDuration').value,
+            plan_id: document.getElementById('licensePlanId').value,
             quantity: document.getElementById('licenseQuantity').value,
         };
         
@@ -735,30 +751,84 @@
     });
 
     // Pricing Management
-    function updatePrice(duration) {
-        const price = document.getElementById(`price_${duration}`).value;
-        
-        if (!confirm(`Update ${duration} day(s) license price to Rp ${price}?`)) return;
-        
-        fetch('/admin/licenses/update-price', {
-            method: 'POST',
+    function openAddPlanModal() {
+        document.getElementById('planModalTitle').textContent = 'Add Plan';
+        document.getElementById('planForm').reset();
+        document.getElementById('planId').value = '';
+        document.getElementById('planActive').value = '1';
+        document.getElementById('planModal').classList.remove('hidden');
+        document.getElementById('planModal').classList.add('flex');
+    }
+
+    function closePlanModal() {
+        document.getElementById('planModal').classList.add('hidden');
+        document.getElementById('planModal').classList.remove('flex');
+    }
+
+    function editPlan(id) {
+        fetch(`/admin/plans/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const plan = data.plan;
+                    document.getElementById('planModalTitle').textContent = 'Edit Plan';
+                    document.getElementById('planId').value = plan.id;
+                    document.getElementById('planName').value = plan.name || '';
+                    document.getElementById('planDays').value = plan.duration_days;
+                    document.getElementById('planPrice').value = plan.price;
+                    document.getElementById('planActive').value = plan.is_active ? '1' : '0';
+                    document.getElementById('planModal').classList.remove('hidden');
+                    document.getElementById('planModal').classList.add('flex');
+                }
+            });
+    }
+
+    function deletePlan(id) {
+        if (!confirm('Delete this plan?')) return;
+        fetch(`/admin/plans/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    document.getElementById('planForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('planId').value;
+        const url = id ? `/admin/plans/${id}` : '/admin/plans';
+        const method = id ? 'PUT' : 'POST';
+        const data = {
+            name: document.getElementById('planName').value,
+            duration_days: document.getElementById('planDays').value,
+            price: document.getElementById('planPrice').value,
+            is_active: document.getElementById('planActive').value,
+        };
+        fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                duration_days: duration,
-                price: price
-            })
+            body: JSON.stringify(data)
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert('Price updated successfully!');
+                location.reload();
+            } else if (data.errors) {
+                alert(Object.values(data.errors).flat().join('\n'));
             }
         });
-    }
+    });
 </script>
 @endpush
 @endsection

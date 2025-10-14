@@ -43,6 +43,16 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/licenses/generate', [DashboardController::class, 'generateLicense']);
     Route::delete('/licenses/{license}', [DashboardController::class, 'deleteLicense']);
     Route::post('/licenses/update-price', [DashboardController::class, 'updateLicensePrice']);
+
+    // License plans management routes (AJAX)
+    Route::get('/plans', [DashboardController::class, 'getPlans']);
+    Route::get('/plans/{plan}', function ($id) {
+        $plan = \App\Models\LicensePlan::findOrFail($id);
+        return response()->json(['success' => true, 'plan' => $plan]);
+    });
+    Route::post('/plans', [DashboardController::class, 'createPlan']);
+    Route::put('/plans/{plan}', [DashboardController::class, 'updatePlan']);
+    Route::delete('/plans/{plan}', [DashboardController::class, 'deletePlan']);
     
     // Reseller management routes (AJAX)
     Route::get('/resellers', [DashboardController::class, 'getResellers']);

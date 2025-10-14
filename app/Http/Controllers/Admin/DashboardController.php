@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Member;
 use App\Models\LicenseKey;
 use App\Models\Reseller;
+use App\Models\LicensePlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -22,8 +23,9 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         $resellers = Reseller::orderBy('created_at', 'desc')->get();
+        $plans = LicensePlan::orderBy('duration_days')->get();
         
-        return view('admin.dashboard', compact('members', 'licenseKeys', 'resellers'));
+        return view('admin.dashboard', compact('members', 'licenseKeys', 'resellers', 'plans'));
     }
 
     /**
@@ -134,15 +136,19 @@ class DashboardController extends Controller
     public function generateLicense(Request $request)
     {
         $validated = $request->validate([
-            'duration_days' => 'required|in:1,3,7,14,30',
+            'plan_id' => 'required|integer|exists:license_plans,id',
             'quantity' => 'required|integer|min:1|max:100',
         ]);
+
+        $plan = LicensePlan::findOrFail($validated['plan_id']);
 
         $licenses = [];
         for ($i = 0; $i < $validated['quantity']; $i++) {
             $license = LicenseKey::create([
                 'code' => LicenseKey::generateCode(),
-                'duration_days' => $validated['duration_days'],
+                'duration_days' => $plan->duration_days,
+                'plan_id' => $plan->id,
+                'price' => (float)$plan->price,
                 'created_by' => auth()->user()->id,
             ]);
             $licenses[] = $license;
@@ -296,23 +302,106 @@ class DashboardController extends Controller
             'price' => 'required|numeric|min:0',
         ]);
 
-        // Store prices in session or database
-        // For simplicity, we'll use session for now
-        $prices = session('license_prices', [
-            1 => 10000,
-            3 => 25000,
-            7 => 40000,
-            14 => 70000,
-            30 => 139000,
-        ]);
-
-        $prices[$validated['duration_days']] = $validated['price'];
-        session(['license_prices' => $prices]);
+        // Store price override in cache (persists across requests)
+        cache()->forever("license_price_{$validated['duration_days']}", $validated['price']);
 
         return response()->json([
             'success' => true,
             'message' => 'License price updated successfully',
+            'price' => $validated['price']
+        ]);
+    }
+
+    /**
+     * Get current license prices
+     */
+    public function getLicensePrices()
+    {
+        $prices = [];
+        foreach ([1, 3, 7, 14, 30] as $duration) {
+            $prices[$duration] = cache("license_price_{$duration}", config("licenses.prices.{$duration}"));
+        }
+
+        return response()->json([
+            'success' => true,
             'prices' => $prices
+        ]);
+    }
+
+    /**
+     * List all license plans (AJAX)
+     */
+    public function getPlans()
+    {
+        $plans = LicensePlan::orderBy('duration_days')->get();
+        return response()->json([
+            'success' => true,
+            'plans' => $plans,
+        ]);
+    }
+
+    /**
+     * Create a new license plan
+     */
+    public function createPlan(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:100',
+            'duration_days' => 'required|integer|min:1|unique:license_plans,duration_days',
+            'price' => 'required|numeric|min:0',
+            'is_active' => 'sometimes|boolean',
+        ]);
+
+        $plan = LicensePlan::create([
+            'name' => $validated['name'] ?? null,
+            'duration_days' => $validated['duration_days'],
+            'price' => $validated['price'],
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Plan created successfully',
+            'plan' => $plan,
+        ]);
+    }
+
+    /**
+     * Update an existing license plan
+     */
+    public function updatePlan(Request $request, LicensePlan $plan)
+    {
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:100',
+            'duration_days' => 'required|integer|min:1|unique:license_plans,duration_days,' . $plan->id,
+            'price' => 'required|numeric|min:0',
+            'is_active' => 'sometimes|boolean',
+        ]);
+
+        $plan->name = $validated['name'] ?? null;
+        $plan->duration_days = $validated['duration_days'];
+        $plan->price = $validated['price'];
+        if (array_key_exists('is_active', $validated)) {
+            $plan->is_active = (bool)$validated['is_active'];
+        }
+        $plan->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Plan updated successfully',
+            'plan' => $plan->fresh(),
+        ]);
+    }
+
+    /**
+     * Delete a license plan
+     */
+    public function deletePlan(LicensePlan $plan)
+    {
+        $plan->delete();
+        return response()->json([
+            'success' => true,
+            'message' => 'Plan deleted successfully',
         ]);
     }
 }

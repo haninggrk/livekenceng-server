@@ -10,6 +10,7 @@ class LicenseKey extends Model
     protected $fillable = [
         'code',
         'duration_days',
+        'plan_id',
         'price',
         'is_used',
         'used_by',
@@ -58,5 +59,13 @@ class LicenseKey extends Model
     public function reseller()
     {
         return $this->belongsTo(Reseller::class, 'reseller_id');
+    }
+
+    /**
+     * Plan associated with this license (optional)
+     */
+    public function plan()
+    {
+        return $this->belongsTo(LicensePlan::class, 'plan_id');
     }
 }

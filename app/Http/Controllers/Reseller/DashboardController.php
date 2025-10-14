@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Reseller;
 
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
+use App\Models\LicensePlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,8 +20,9 @@ class DashboardController extends Controller
             ->with(['member'])
             ->orderBy('created_at', 'desc')
             ->get();
+        $plans = LicensePlan::where('is_active', true)->orderBy('duration_days')->get();
         
-        return view('reseller.dashboard', compact('reseller', 'licenses'));
+        return view('reseller.dashboard', compact('reseller', 'licenses', 'plans'));
     }
 
     /**
@@ -28,25 +30,19 @@ class DashboardController extends Controller
      */
     public function getPricing()
     {
-        // Define base pricing for each duration
-        $basePricing = [
-            1 => 10000,   // 1 day
-            3 => 25000,   // 3 days
-            7 => 40000,   // 7 days
-            14 => 70000,  // 14 days
-            30 => 139000, // 30 days
-        ];
-
         $reseller = Auth::guard('reseller')->user();
-        $pricing = [];
-
-        foreach ($basePricing as $days => $basePrice) {
-            $pricing[$days] = [
+        $plans = LicensePlan::where('is_active', true)->orderBy('duration_days')->get();
+        $pricing = $plans->map(function ($plan) use ($reseller) {
+            $basePrice = (float)$plan->price;
+            return [
+                'plan_id' => $plan->id,
+                'name' => $plan->name,
+                'duration_days' => $plan->duration_days,
                 'base_price' => $basePrice,
-                'discount' => $reseller->discount_percentage,
+                'discount' => (float)$reseller->discount_percentage,
                 'final_price' => $reseller->calculatePrice($basePrice),
             ];
-        }
+        })->values();
 
         return response()->json([
             'success' => true,
@@ -61,22 +57,33 @@ class DashboardController extends Controller
     public function generateLicense(Request $request)
     {
         $validated = $request->validate([
-            'duration_days' => 'required|in:1,3,7,14,30',
+            'duration_days' => 'required_without:plan_id|in:1,3,7,14,30',
+            'plan_id' => 'required_without:duration_days|integer|exists:license_plans,id',
             'quantity' => 'required|integer|min:1|max:100',
         ]);
 
         $reseller = Auth::guard('reseller')->user();
 
-        // Define base pricing
-        $basePricing = [
-            1 => 10000,
-            3 => 25000,
-            7 => 40000,
-            14 => 70000,
-            30 => 139000,
-        ];
+        // Prefer plan_id if provided; fallback to duration_days (legacy)
+        $plan = null;
+        if ($request->filled('plan_id')) {
+            $plan = LicensePlan::where('is_active', true)->findOrFail($request->input('plan_id'));
+            $basePrice = (float)$plan->price;
+            $durationDays = (int)$plan->duration_days;
+        } else {
+            // Legacy fallback
+            $durationDays = (int)$validated['duration_days'];
+            $plan = LicensePlan::where('is_active', true)->where('duration_days', $durationDays)->first();
+            $basePrice = $plan ? (float)$plan->price : match($durationDays) {
+                1 => 10000,
+                3 => 25000,
+                7 => 40000,
+                14 => 70000,
+                30 => 139000,
+                default => 0,
+            };
+        }
 
-        $basePrice = $basePricing[$validated['duration_days']];
         $finalPrice = $reseller->calculatePrice($basePrice);
         $totalCost = $finalPrice * $validated['quantity'];
 
@@ -92,7 +99,8 @@ class DashboardController extends Controller
         for ($i = 0; $i < $validated['quantity']; $i++) {
             $license = LicenseKey::create([
                 'code' => LicenseKey::generateCode(),
-                'duration_days' => $validated['duration_days'],
+                'duration_days' => $durationDays,
+                'plan_id' => $plan?->id,
                 'price' => $finalPrice,
                 'reseller_id' => $reseller->id,
             ]);

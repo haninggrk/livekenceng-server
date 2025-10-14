@@ -76,45 +76,25 @@
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-6">Generate License Keys</h2>
             
-            <!-- Pricing Table -->
-            <div class="grid grid-cols-5 gap-4 mb-6">
+            <!-- Plans Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                @foreach($plans as $plan)
                 <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 mb-2">1 Day</p>
-                    <p class="text-xs text-gray-500 line-through">Rp 10,000</p>
-                    <p class="text-lg font-bold text-primary-600" data-duration="1" data-base-price="10000">Rp {{ number_format(10000 * (100 - $reseller->discount_percentage) / 100, 0, ',', '.') }}</p>
+                    <p class="text-sm text-gray-600 mb-2">{{ $plan->name ?? ($plan->duration_days . ' Day') }}</p>
+                    <p class="text-xs text-gray-500 line-through">Rp {{ number_format($plan->price, 0, ',', '.') }}</p>
+                    <p class="text-lg font-bold text-primary-600">Rp {{ number_format(((float)$plan->price) * (100 - (float)$reseller->discount_percentage) / 100, 0, ',', '.') }}</p>
                 </div>
-                <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 mb-2">3 Days</p>
-                    <p class="text-xs text-gray-500 line-through">Rp 25,000</p>
-                    <p class="text-lg font-bold text-primary-600" data-duration="3" data-base-price="25000">Rp {{ number_format(25000 * (100 - $reseller->discount_percentage) / 100, 0, ',', '.') }}</p>
-                </div>
-                <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 mb-2">7 Days</p>
-                    <p class="text-xs text-gray-500 line-through">Rp 40,000</p>
-                    <p class="text-lg font-bold text-primary-600" data-duration="7" data-base-price="40000">Rp {{ number_format(40000 * (100 - $reseller->discount_percentage) / 100, 0, ',', '.') }}</p>
-                </div>
-                <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 mb-2">14 Days</p>
-                    <p class="text-xs text-gray-500 line-through">Rp 70,000</p>
-                    <p class="text-lg font-bold text-primary-600" data-duration="14" data-base-price="70000">Rp {{ number_format(70000 * (100 - $reseller->discount_percentage) / 100, 0, ',', '.') }}</p>
-                </div>
-                <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 mb-2">30 Days</p>
-                    <p class="text-xs text-gray-500 line-through">Rp 139,000</p>
-                    <p class="text-lg font-bold text-primary-600" data-duration="30" data-base-price="139000">Rp {{ number_format(139000 * (100 - $reseller->discount_percentage) / 100, 0, ',', '.') }}</p>
-                </div>
+                @endforeach
             </div>
 
             <!-- Generate Form -->
             <form id="generateForm" class="grid grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Duration</label>
-                    <select id="duration" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option value="1">1 Day</option>
-                        <option value="3">3 Days</option>
-                        <option value="7">7 Days</option>
-                        <option value="14">14 Days</option>
-                        <option value="30">30 Days</option>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Plan</label>
+                    <select id="plan_id" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        @foreach($plans as $plan)
+                        <option value="{{ $plan->id }}">{{ $plan->name ?? ($plan->duration_days . ' Day') }} - Rp {{ number_format($plan->price, 0, ',', '.') }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -191,7 +171,7 @@
         e.preventDefault();
         
         const data = {
-            duration_days: document.getElementById('duration').value,
+            plan_id: document.getElementById('plan_id').value,
             quantity: document.getElementById('quantity').value,
         };
         
