@@ -254,6 +254,63 @@ Content-Type: application/json
 }
 ```
 
+---
+
+### 5. Change Password
+
+Securely change a member's password from the desktop app. Requires the current password and enforces machine lock (machine_id must match or be set on first change).
+
+**Endpoint:** `POST /api/members/change-password`
+
+**Headers:**
+```http
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "current_password": "oldPass123",
+  "new_password": "newPass456",
+  "machine_id": "UNIQUE-MACHINE-ID-123"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Password updated successfully"
+}
+```
+
+**Error Responses:**
+
+*User Not Found (404 Not Found):*
+```json
+{
+  "success": false,
+  "message": "User not found"
+}
+```
+
+*Current Password Incorrect (401 Unauthorized):*
+```json
+{
+  "success": false,
+  "message": "Current password is incorrect"
+}
+```
+
+*Machine ID Mismatch (401 Unauthorized):*
+```json
+{
+  "success": false,
+  "message": "Machine ID mismatch"
+}
+```
+
 **Success Response (200 OK):**
 ```json
 {

@@ -74,6 +74,44 @@ class MemberController extends Controller
     }
 
     /**
+     * Change member password (desktop app)
+     */
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'current_password' => 'required|string|min:6',
+            'new_password' => 'required|string|min:6',
+            'machine_id' => 'required|string',
+        ]);
+
+        $member = Member::where('email', $request->email)->first();
+        if (!$member) {
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
+        }
+
+        if (!Hash::check($request->current_password, $member->password)) {
+            return response()->json(['success' => false, 'message' => 'Current password is incorrect'], 401);
+        }
+
+        // Enforce same device
+        if ($member->machine_id && $member->machine_id !== $request->machine_id) {
+            return response()->json(['success' => false, 'message' => 'Machine ID mismatch'], 401);
+        }
+        if (!$member->machine_id) {
+            $member->machine_id = $request->machine_id;
+        }
+
+        $member->password = Hash::make($request->new_password);
+        $member->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully',
+        ]);
+    }
+
+    /**
      * Get machine ID by email
      */
     public function getMachineId($email)

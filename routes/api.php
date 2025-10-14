@@ -14,4 +14,5 @@ Route::prefix('members')->group(function () {
     Route::get('/machine-id/{email}', [MemberController::class, 'getMachineId']);
     Route::post('/machine-id', [MemberController::class, 'updateMachineId']);
     Route::post('/redeem-license', [MemberController::class, 'redeemLicense']);
+    Route::post('/change-password', [MemberController::class, 'changePassword']);
 });
