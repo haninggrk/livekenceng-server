@@ -9,7 +9,7 @@
         <div class="text-center mb-8">
             <img src="{{ asset('images/logo.jpeg') }}" alt="Livekenceng Logo" class="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-lg">
             <h2 class="text-3xl font-bold text-gray-900">Admin Login</h2>
-            <p class="mt-2 text-gray-600">Livekenceng Dashboard</p>
+            <p class="mt-2 text-gray-600">Livekenceng Dashboard & Reseller Login</p>
         </div>
 
         <!-- Login Form -->

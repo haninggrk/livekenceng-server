@@ -30,9 +30,16 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        // Try admin (web) guard first
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
             return redirect()->intended(route('admin.dashboard'));
+        }
+
+        // Fallback: try reseller guard; allow login to reseller area via the same form
+        if (Auth::guard('reseller')->attempt($credentials, $request->filled('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->intended(route('reseller.dashboard'));
         }
 
         return back()->withErrors([
@@ -45,7 +52,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Logout from both guards if present
+        if (Auth::check()) {
+            Auth::logout();
+        }
+        if (Auth::guard('reseller')->check()) {
+            Auth::guard('reseller')->logout();
+        }
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
