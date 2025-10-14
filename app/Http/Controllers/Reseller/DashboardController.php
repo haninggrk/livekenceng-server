@@ -104,8 +104,9 @@ class DashboardController extends Controller
                 'plan_id' => $plan?->id,
                 'price' => $finalPrice,
                 'reseller_id' => $reseller->id,
-                // created_by is a NOT NULL FK to users; attach to first admin user
-                'created_by' => optional(User::query()->orderBy('id')->first())->id,
+                // created_by is for admin; set to null; track reseller creator explicitly
+                'created_by' => null,
+                'created_by_reseller_id' => $reseller->id,
             ]);
             $licenses[] = $license;
         }

@@ -15,6 +15,7 @@ class LicenseKey extends Model
         'is_used',
         'used_by',
         'created_by',
+        'created_by_reseller_id',
         'reseller_id',
         'used_at',
     ];
@@ -59,6 +60,11 @@ class LicenseKey extends Model
     public function reseller()
     {
         return $this->belongsTo(Reseller::class, 'reseller_id');
+    }
+
+    public function creatorReseller()
+    {
+        return $this->belongsTo(Reseller::class, 'created_by_reseller_id');
     }
 
     /**
