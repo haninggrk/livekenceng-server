@@ -290,32 +290,8 @@
                 WhatsApp adalah channel utama untuk trial dan pembelian berlangganan. Jika tidak tersedia, gunakan Official Partner (Telegram).
             </p>
 
-            <div class="grid md:grid-cols-2 gap-6 mb-8">
-                <!-- Primary: WhatsApp -->
-                <a href="https://api.whatsapp.com/send/?phone=6288989676008&text&type=phone_number&app_absent=0" target="_blank" rel="noopener" class="block bg-white text-primary-700 hover:bg-gray-100 rounded-2xl p-6 text-left transition-colors">
-                    <div class="flex items-center mb-3">
-                        <svg class="w-8 h-8 mr-3 text-primary-600" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M20.52 3.48A11.94 11.94 0 0012 0C5.37 0 0 5.37 0 12c0 2.11.55 4.09 1.51 5.8L0 24l6.35-1.66A11.94 11.94 0 0012 24c6.63 0 12-5.37 12-12 0-3.19-1.24-6.19-3.48-8.52zM12 22a9.93 9.93 0 01-5.07-1.39l-.36-.21-3.77.99 1.01-3.67-.23-.38A9.93 9.93 0 012 12C2 6.49 6.49 2 12 2s10 4.49 10 10-4.49 10-10 10zm5.2-7.54c-.28-.14-1.66-.82-1.92-.91-.26-.1-.45-.14-.64.14-.19.28-.73.91-.9 1.1-.17.19-.33.21-.61.07-.28-.14-1.18-.43-2.25-1.38-.83-.74-1.39-1.66-1.55-1.94-.16-.28-.02-.43.12-.56.12-.12.28-.33.42-.49.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.49-.07-.14-.64-1.54-.88-2.11-.23-.56-.47-.49-.64-.49h-.54c-.19 0-.49.07-.75.35-.26.28-1 1-1 2.43s1.02 2.82 1.17 3.01c.14.19 2 3.05 4.85 4.27.68.29 1.21.46 1.62.59.68.22 1.3.19 1.79.12.55-.08 1.66-.68 1.89-1.33.23-.66.23-1.22.16-1.33-.07-.12-.26-.19-.54-.33z"/>
-                        </svg>
-                        <span class="text-2xl font-semibold">WhatsApp (Utama)</span>
-                    </div>
-                    <p class="text-gray-700">Chat sekarang untuk trial dan pembelian.</p>
-                </a>
-
-                <!-- Secondary: Official Partner (Telegram) -->
-                <a href="https://t.me/+BzP5UnKPU6s4YTVl" target="_blank" rel="noopener" class="block bg-white bg-opacity-10 hover:bg-opacity-20 rounded-2xl p-6 text-left transition-colors">
-                    <div class="flex items-center mb-3">
-                        <svg class="w-8 h-8 mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                        </svg>
-                        <div>
-                            <div class="text-2xl font-semibold">Official Partner</div>
-                            <div class="opacity-80">Telegram Community</div>
-                        </div>
-                    </div>
-                    <p class="opacity-90">Beli via Telegram (resmi) jika WhatsApp tidak tersedia.</p>
-                </a>
-            </div>
+            <!-- Simplified: Single WhatsApp CTA -->
+            <div class="mb-8"></div>
 
             <a href="https://api.whatsapp.com/send/?phone=6288989676008&text&type=phone_number&app_absent=0" target="_blank" rel="noopener" class="bg-white text-primary-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-block">
                 Chat WhatsApp Sekarang

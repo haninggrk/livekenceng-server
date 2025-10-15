@@ -70,13 +70,8 @@
     <!-- Floating WhatsApp Button (Global) -->
     <a href="https://api.whatsapp.com/send/?phone=6288989676008&text&type=phone_number&app_absent=0" target="_blank" rel="noopener" aria-label="Chat WhatsApp"
        class="fixed z-[60] right-4 bottom-4 md:right-6 md:bottom-6 group">
-        <span class="relative inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition transform group-hover:scale-105"
-              style="background: #25D366;">
-            <!-- Simple WhatsApp icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-7 h-7 text-white">
-                <path fill="currentColor" d="M19.11 17.34c-.27-.14-1.6-.79-1.85-.88c-.25-.09-.43-.14-.61.14c-.18.27-.7.88-.86 1.06c-.16.18-.31.2-.57.07c-.27-.14-1.09-.4-2.08-1.28c-.78-.7-1.31-1.56-1.46-1.82c-.15-.27-.02-.41.11-.54c.12-.12.26-.3.39-.45c.13-.15.17-.27.26-.45c.08-.18.05-.33-.02-.47c-.07-.13-.6-1.45-.83-1.99c-.22-.53-.44-.46-.6-.46h-.5c-.18 0-.45.07-.69.32c-.24.25-.92.93-.92 2.26c0 1.33.95 2.61 1.08 2.8c.13.18 1.86 2.83 4.52 3.95c.64.27 1.13.43 1.52.54c.64.2 1.22.18 1.68.11c.51-.08 1.56-.63 1.77-1.23c.22-.61.22-1.12.15-1.22c-.06-.1-.24-.18-.51-.31z"/>
-                <path fill="currentColor" d="M16 3C9.38 3 4 8.38 4 15c0 2.56.83 4.93 2.24 6.86L5 29l7.36-1.94C13.7 27.7 14.83 28 16 28c6.62 0 12-5.38 12-12S22.62 3 16 3m0 22c-1.17 0-2.3-.3-3.3-.86l-.24-.14l-4.48 1.19l1.2-4.36l-.15-.23C7.3 19.51 7 18.33 7 17c0-4.97 4.03-9 9-9s9 4.03 9 9s-4.03 9-9 9"/>
-            </svg>
+        <span class="relative inline-flex items-center justify-center w-16 h-16 rounded-full shadow-lg transition transform group-hover:scale-105 bg-white">
+            <img src="/images/icons8-whatsapp.gif" alt="WhatsApp" class="w-12 h-12" />
         </span>
         <span class="absolute right-20 -top-1 hidden md:inline-block bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
             Chat WhatsApp
