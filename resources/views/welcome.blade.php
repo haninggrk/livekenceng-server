@@ -307,6 +307,17 @@
                 <p class="text-gray-600">Bergabung untuk tips, update, dan dukungan komunitas.</p>
             </div>
             <div class="grid sm:grid-cols-2 gap-6">
+                <!-- WhatsApp Community -->
+                <a href="https://chat.whatsapp.com/B6jzzUwZDNU1BiZECPec28?mode=wwt" target="_blank" rel="noopener" class="flex items-center justify-between p-5 rounded-2xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors">
+                    <div class="flex items-center">
+                        <img src="/images/WhatsApp.webp" alt="WhatsApp" class="w-8 h-8 mr-3" />
+                        <div>
+                            <div class="text-lg font-semibold text-gray-900">WhatsApp Community</div>
+                            <div class="text-sm text-gray-600">Bot Live Kenceng ⚡ Group</div>
+                        </div>
+                    </div>
+                    <span class="text-primary-600 font-medium">Join</span>
+                </a>
                 <a href="https://t.me/+BzP5UnKPU6s4YTVl" target="_blank" rel="noopener" class="flex items-center justify-between p-5 rounded-2xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors">
                     <div class="flex items-center">
                         <svg class="w-8 h-8 mr-3 text-primary-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -355,6 +366,7 @@
                     <ul class="space-y-2">
                         <li class="text-gray-400">Email: support@livekenceng.com</li>
                         <li class="text-gray-400">WhatsApp: <a class="underline hover:text-white" target="_blank" rel="noopener" href="https://api.whatsapp.com/send/?phone=6288989676008&text&type=phone_number&app_absent=0">+62 889-8967-6008</a></li>
+                        <li class="text-gray-400">WA Community: <a class="underline hover:text-white" target="_blank" rel="noopener" href="https://chat.whatsapp.com/B6jzzUwZDNU1BiZECPec28?mode=wwt">Join Group</a></li>
                         <li class="text-gray-400">Official Partner: <a class="underline hover:text-white" target="_blank" rel="noopener" href="https://t.me/+BzP5UnKPU6s4YTVl">Telegram Community</a></li>
                     </ul>
                 </div>
