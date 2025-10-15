@@ -70,8 +70,8 @@
     <!-- Floating WhatsApp Button (Global) -->
     <a href="https://api.whatsapp.com/send/?phone=6288989676008&text&type=phone_number&app_absent=0" target="_blank" rel="noopener" aria-label="Chat WhatsApp"
        class="fixed z-[60] right-4 bottom-4 md:right-6 md:bottom-6 group">
-        <span class="relative inline-flex items-center justify-center w-16 h-16 rounded-full shadow-lg transition transform group-hover:scale-105 bg-white">
-            <img src="/images/icons8-whatsapp.gif" alt="WhatsApp" class="w-12 h-12" />
+        <span class="relative inline-flex items-center justify-center transition transform group-hover:scale-105">
+            <img src="/images/icons8-whatsapp.gif" alt="WhatsApp" class="w-20 h-20" />
         </span>
         <span class="absolute right-20 -top-1 hidden md:inline-block bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
             Chat WhatsApp
