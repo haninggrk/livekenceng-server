@@ -32,6 +32,9 @@ class MemberController extends Controller
             ], 401);
         }
 
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
         // Verify password
         if (!Hash::check($request->password, $member->password)) {
             return response()->json([
@@ -90,6 +93,9 @@ class MemberController extends Controller
             return response()->json(['success' => false, 'message' => 'User not found'], 404);
         }
 
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
         if (!Hash::check($request->current_password, $member->password)) {
             return response()->json(['success' => false, 'message' => 'Current password is incorrect'], 401);
         }
@@ -125,6 +131,9 @@ class MemberController extends Controller
             ], 404);
         }
 
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
         return response()->json([
             'success' => true,
             'email' => $member->email,
@@ -152,6 +161,9 @@ class MemberController extends Controller
                 'message' => 'User not found'
             ], 404);
         }
+
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
 
         $member->machine_id = $request->machine_id;
         $member->save();
@@ -197,6 +209,11 @@ class MemberController extends Controller
         $member = Member::where('email', $request->email)->first();
         $isNewMember = false;
         $generatedPassword = null;
+
+        // If member exists, check and update expired status
+        if ($member) {
+            $member->checkAndUpdateExpiredStatus();
+        }
 
         if (!$member) {
             // Create new member with random password

@@ -40,4 +40,17 @@ class Member extends Model
     {
         return $this->hasMany(LicenseKey::class, 'used_by');
     }
+
+    /**
+     * Check if member is expired and update machine_id if needed
+     */
+    public function checkAndUpdateExpiredStatus(): bool
+    {
+        if (!$this->isActive() && $this->machine_id && $this->machine_id !== 'EXPIRED') {
+            $this->machine_id = 'EXPIRED';
+            $this->save();
+            return true; // Status was updated
+        }
+        return false; // No update needed
+    }
 }
