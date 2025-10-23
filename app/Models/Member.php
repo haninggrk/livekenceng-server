@@ -11,6 +11,7 @@ class Member extends Model
         'password',
         'machine_id',
         'expiry_date',
+        'telegram_username',
     ];
 
     protected $hidden = [
@@ -39,6 +40,22 @@ class Member extends Model
     public function licenseKeys()
     {
         return $this->hasMany(LicenseKey::class, 'used_by');
+    }
+
+    /**
+     * Shopee accounts owned by this member
+     */
+    public function shopeeAccounts()
+    {
+        return $this->hasMany(ShopeeAccount::class);
+    }
+
+    /**
+     * Active Shopee accounts owned by this member
+     */
+    public function activeShopeeAccounts()
+    {
+        return $this->hasMany(ShopeeAccount::class)->where('is_active', true);
     }
 
     /**

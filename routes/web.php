@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\UpdateController;
+use App\Http\Controllers\Admin\ShopeeAccountController;
 use App\Http\Controllers\Reseller\AuthController as ResellerAuthController;
 use App\Http\Controllers\Reseller\DashboardController as ResellerDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +66,25 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/resellers/{reseller}', [DashboardController::class, 'updateReseller']);
     Route::delete('/resellers/{reseller}', [DashboardController::class, 'deleteReseller']);
     Route::post('/resellers/{reseller}/add-balance', [DashboardController::class, 'addBalance']);
+    
+    // Update management routes
+    Route::get('/updates', [UpdateController::class, 'index'])->name('admin.updates.index');
+    Route::get('/updates/create', [UpdateController::class, 'create'])->name('admin.updates.create');
+    Route::post('/updates', [UpdateController::class, 'store'])->name('admin.updates.store');
+    Route::get('/updates/{update}/edit', [UpdateController::class, 'edit'])->name('admin.updates.edit');
+    Route::put('/updates/{update}', [UpdateController::class, 'update'])->name('admin.updates.update');
+    Route::delete('/updates/{update}', [UpdateController::class, 'destroy'])->name('admin.updates.destroy');
+    Route::post('/updates/{update}/toggle-active', [UpdateController::class, 'toggleActive'])->name('admin.updates.toggle-active');
+    Route::get('/updates-data', [UpdateController::class, 'getUpdates'])->name('admin.updates.data');
+    
+    // Shopee accounts and Telegram management routes (AJAX)
+    Route::get('/shopee-accounts', [ShopeeAccountController::class, 'index']);
+    Route::get('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'show']);
+    Route::get('/members/{member}/shopee-accounts', [ShopeeAccountController::class, 'getByMember']);
+    Route::post('/shopee-accounts', [ShopeeAccountController::class, 'store']);
+    Route::put('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'update']);
+    Route::delete('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'destroy']);
+    Route::put('/members/{member}/telegram', [ShopeeAccountController::class, 'updateTelegram']);
 });
 
 // Reseller authentication routes

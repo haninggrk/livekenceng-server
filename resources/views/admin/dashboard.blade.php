@@ -88,6 +88,12 @@
                     <button onclick="switchTab('pricing')" id="tab-pricing" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         License Pricing
                     </button>
+                    <button onclick="switchTab('shopee')" id="tab-shopee" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Shopee & Telegram
+                    </button>
+                    <a href="{{ route('admin.updates.index') }}" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Software Updates
+                    </a>
                 </nav>
             </div>
 
@@ -265,6 +271,96 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Shopee & Telegram Tab -->
+            <div id="content-shopee" class="tab-content p-6 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Shopee Accounts & Telegram Management</h2>
+                    <button onclick="openAddShopeeModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                        + Add Shopee Account
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Shopee Accounts Section -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Shopee Accounts</h3>
+                            <p class="text-sm text-gray-600 mt-1">Manage member Shopee accounts</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="shopeeAccountsTableBody">
+                                        <!-- Shopee accounts will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Telegram Management Section -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Telegram Usernames</h3>
+                            <p class="text-sm text-gray-600 mt-1">Manage member Telegram usernames</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium text-gray-900">Member Email</p>
+                                        <p class="text-sm text-gray-600">Telegram Username</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm text-gray-900" id="telegramCount">0 members</p>
+                                        <p class="text-xs text-gray-500">with Telegram</p>
+                                    </div>
+                                </div>
+                                <div class="max-h-64 overflow-y-auto space-y-2" id="telegramList">
+                                    <!-- Telegram usernames will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Eligible Cookies Section -->
+                <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Eligible Cookies</h3>
+                        <p class="text-sm text-gray-600 mt-1">Active members with Shopee accounts and Telegram</p>
+                    </div>
+                    <div class="p-6">
+                        <button onclick="loadEligibleCookies()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors mb-4">
+                            Load Eligible Cookies
+                        </button>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telegram</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shopee Accounts</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="eligibleCookiesTableBody">
+                                    <!-- Eligible cookies will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -447,6 +543,53 @@
                 </button>
                 <button type="button" onclick="closePlanModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
                     Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add/Edit Shopee Account Modal -->
+<div id="shopeeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full mx-4">
+        <h3 id="shopeeModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Shopee Account</h3>
+        <form id="shopeeForm">
+            <input type="hidden" id="shopeeAccountId">
+            <input type="hidden" id="shopeeMemberId">
+            
+            <div class="mb-4">
+                <label for="shopeeMemberSelect" class="block text-sm font-medium text-gray-700 mb-2">Member</label>
+                <select id="shopeeMemberSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Select a member</option>
+                    @foreach($members as $member)
+                    <option value="{{ $member->id }}">{{ $member->email }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label for="shopeeName" class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
+                <input type="text" id="shopeeName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="e.g., My Shopee Account" required>
+            </div>
+            
+            <div class="mb-4">
+                <label for="shopeeCookie" class="block text-sm font-medium text-gray-700 mb-2">Cookie</label>
+                <textarea id="shopeeCookie" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="session_id=abc123; user_id=456; ..." required></textarea>
+            </div>
+            
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" id="shopeeIsActive" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked>
+                    <span class="ml-2 text-sm text-gray-700">Active</span>
+                </label>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeShopeeModal()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
+                    Save
                 </button>
             </div>
         </form>
@@ -841,6 +984,177 @@
                 switchTab(saved);
             }
         } catch (e) {}
+    });
+
+    // Shopee Accounts Management
+    function openAddShopeeModal() {
+        document.getElementById('shopeeModalTitle').textContent = 'Add Shopee Account';
+        document.getElementById('shopeeForm').reset();
+        document.getElementById('shopeeModal').classList.remove('hidden');
+        document.getElementById('shopeeModal').classList.add('flex');
+    }
+
+    function closeShopeeModal() {
+        document.getElementById('shopeeModal').classList.add('hidden');
+        document.getElementById('shopeeModal').classList.remove('flex');
+    }
+
+    // Handle Shopee form submission
+    document.getElementById('shopeeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            member_id: document.getElementById('shopeeMemberSelect').value,
+            name: document.getElementById('shopeeName').value,
+            cookie: document.getElementById('shopeeCookie').value,
+            is_active: document.getElementById('shopeeIsActive').checked
+        };
+        
+        const accountId = document.getElementById('shopeeAccountId').value;
+        const url = accountId ? `/admin/shopee-accounts/${accountId}` : '/admin/shopee-accounts';
+        const method = accountId ? 'PUT' : 'POST';
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeShopeeModal();
+                loadShopeeAccounts();
+                alert(data.message);
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    });
+
+    function editShopeeAccount(id) {
+        // Load shopee account data and open modal
+        fetch(`/admin/shopee-accounts/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const account = data.shopee_account;
+                    document.getElementById('shopeeModalTitle').textContent = 'Edit Shopee Account';
+                    document.getElementById('shopeeAccountId').value = account.id;
+                    document.getElementById('shopeeMemberId').value = account.member_id;
+                    document.getElementById('shopeeName').value = account.name;
+                    document.getElementById('shopeeCookie').value = account.cookie;
+                    document.getElementById('shopeeIsActive').checked = account.is_active;
+                    document.getElementById('shopeeModal').classList.remove('hidden');
+                    document.getElementById('shopeeModal').classList.add('flex');
+                }
+            })
+            .catch(error => {
+                alert('Error loading shopee account: ' + error.message);
+            });
+    }
+
+    function deleteShopeeAccount(id) {
+        if (confirm('Are you sure you want to delete this Shopee account?')) {
+            fetch(`/admin/shopee-accounts/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadShopeeAccounts();
+                    alert('Shopee account deleted successfully');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error deleting shopee account: ' + error.message);
+            });
+        }
+    }
+
+    function loadShopeeAccounts() {
+        fetch('/admin/shopee-accounts')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('shopeeAccountsTableBody');
+                    tbody.innerHTML = '';
+                    
+                    data.shopee_accounts.forEach(account => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${account.member.email}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${account.name}</td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${account.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                    ${account.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="editShopeeAccount(${account.id})" class="text-primary-600 hover:text-primary-900 mr-3">Edit</button>
+                                <button onclick="deleteShopeeAccount(${account.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading shopee accounts:', error);
+            });
+    }
+
+    function loadEligibleCookies() {
+        fetch('/api/shopee/eligible-cookies')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('eligibleCookiesTableBody');
+                    tbody.innerHTML = '';
+                    
+                    data.eligible_members.forEach(member => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${member.email}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${member.telegram_username || 'Not set'}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${member.shopee_accounts.length} accounts</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="viewMemberDetails(${member.member_id})" class="text-primary-600 hover:text-primary-900">View Details</button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading eligible cookies:', error);
+            });
+    }
+
+    function viewMemberDetails(memberId) {
+        // Load member details in a modal or new page
+        alert('Member details for ID: ' + memberId);
+    }
+
+    // Load shopee accounts when tab is switched
+    document.addEventListener('DOMContentLoaded', function() {
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function(tab) {
+            originalSwitchTab(tab);
+            if (tab === 'shopee') {
+                loadShopeeAccounts();
+            }
+        };
     });
 </script>
 @endpush
