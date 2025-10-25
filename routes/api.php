@@ -10,13 +10,30 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Member authentication routes (for desktop app)
+// Member authentication and profile routes (for desktop app)
 Route::prefix('members')->group(function () {
+    // Authentication
     Route::post('/login', [MemberController::class, 'login']);
-    Route::get('/machine-id/{email}', [MemberController::class, 'getMachineId']);
-    Route::post('/machine-id', [MemberController::class, 'updateMachineId']);
     Route::post('/redeem-license', [MemberController::class, 'redeemLicense']);
     Route::post('/change-password', [MemberController::class, 'changePassword']);
+    
+    // Profile management
+    Route::post('/profile', [MemberController::class, 'getProfile']);
+    Route::put('/telegram', [MemberController::class, 'updateTelegram']);
+    
+    // Settings
+    Route::post('/settings', [MemberController::class, 'getSettings']);
+    Route::put('/settings', [MemberController::class, 'updateSettings']);
+    
+    // Machine ID management
+    Route::get('/machine-id/{email}', [MemberController::class, 'getMachineId']);
+    Route::post('/machine-id', [MemberController::class, 'updateMachineId']);
+    
+    // Shopee accounts
+    Route::get('/shopee-accounts', [ShopeeAccountController::class, 'getMemberShopeeAccounts']);
+    Route::post('/shopee-accounts', [ShopeeAccountController::class, 'addShopeeAccount']);
+    Route::put('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'updateShopeeAccount']);
+    Route::delete('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'deleteShopeeAccount']);
 });
 
 // Software update routes

@@ -70,8 +70,11 @@ class MemberController extends Controller
             'user' => [
                 'id' => $member->id,
                 'email' => $member->email,
-                'machine_id' => $member->machine_id,
+                'telegram_username' => $member->telegram_username,
                 'expiry_date' => $member->expiry_date?->toIso8601String(),
+                'machine_id' => $member->machine_id,
+                'created_at' => $member->created_at,
+                'updated_at' => $member->updated_at,
             ]
         ]);
     }
@@ -260,5 +263,172 @@ class MemberController extends Controller
         }
 
         return response()->json($response);
+    }
+
+    /**
+     * Get user profile
+     */
+    public function getProfile(Request $request)
+    {
+        // Validate required fields
+        if (!$request->email || !$request->password) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email and password are required'
+            ], 400);
+        }
+
+        $member = Member::where('email', $request->email)->first();
+
+        if (!$member || !Hash::check($request->password, $member->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $member->id,
+                'email' => $member->email,
+                'telegram_username' => $member->telegram_username,
+                'expiry_date' => $member->expiry_date?->toIso8601String(),
+                'machine_id' => $member->machine_id,
+                'created_at' => $member->created_at,
+                'updated_at' => $member->updated_at,
+            ]
+        ]);
+    }
+
+    /**
+     * Update Telegram username
+     */
+    public function updateTelegram(Request $request)
+    {
+        // Validate required fields
+        if (!$request->email || !$request->password) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email and password are required'
+            ], 400);
+        }
+
+        $member = Member::where('email', $request->email)->first();
+
+        if (!$member || !Hash::check($request->password, $member->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
+        // Validate telegram username
+        $request->validate([
+            'telegram_username' => 'nullable|string|max:255'
+        ]);
+
+        $member->telegram_username = $request->telegram_username;
+        $member->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Telegram username updated successfully',
+            'data' => [
+                'id' => $member->id,
+                'email' => $member->email,
+                'telegram_username' => $member->telegram_username,
+                'updated_at' => $member->updated_at,
+            ]
+        ]);
+    }
+
+    /**
+     * Get user settings (placeholder for future implementation)
+     */
+    public function getSettings(Request $request)
+    {
+        // Validate required fields
+        if (!$request->email || !$request->password) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email and password are required'
+            ], 400);
+        }
+
+        $member = Member::where('email', $request->email)->first();
+
+        if (!$member || !Hash::check($request->password, $member->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
+        // Return empty settings for now (can be expanded later with a settings table)
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'download_platform' => null,
+                'download_duration' => null,
+                'download_save_location' => null,
+                'split_duration' => null,
+                'part_delay_seconds' => null,
+                'custom_ffmpeg_path' => null,
+            ]
+        ]);
+    }
+
+    /**
+     * Update user settings (placeholder for future implementation)
+     */
+    public function updateSettings(Request $request)
+    {
+        // Validate required fields
+        if (!$request->email || !$request->password) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email and password are required'
+            ], 400);
+        }
+
+        $member = Member::where('email', $request->email)->first();
+
+        if (!$member || !Hash::check($request->password, $member->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
+        // Validate settings
+        $request->validate([
+            'settings' => 'nullable|array',
+            'settings.download_platform' => 'nullable|string',
+            'settings.download_duration' => 'nullable|integer',
+            'settings.download_save_location' => 'nullable|string',
+            'settings.split_duration' => 'nullable|integer',
+            'settings.part_delay_seconds' => 'nullable|integer',
+            'settings.custom_ffmpeg_path' => 'nullable|string',
+        ]);
+
+        // For now, just return success (can be expanded later with a settings table)
+        return response()->json([
+            'success' => true,
+            'message' => 'Settings updated successfully',
+            'data' => $request->settings ?? []
+        ]);
     }
 }

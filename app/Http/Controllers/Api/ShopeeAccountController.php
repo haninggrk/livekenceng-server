@@ -7,6 +7,7 @@ use App\Models\ShopeeAccount;
 use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class ShopeeAccountController extends Controller
 {
@@ -15,27 +16,34 @@ class ShopeeAccountController extends Controller
      */
     public function getMemberShopeeAccounts(Request $request)
     {
-        if (!$request->email || !$request->password) {
+        // Support both POST (query params) and GET (request params)
+        $email = $request->get('email') ?? $request->email;
+        $password = $request->get('password') ?? $request->password;
+
+        if (!$email || !$password) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email and password are required'
             ], 400);
         }
 
-        $member = Member::where('email', $request->email)->first();
+        $member = Member::where('email', $email)->first();
         
-        if (!$member || !\Hash::check($request->password, $member->password)) {
+        if (!$member || !Hash::check($password, $member->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials'
             ], 401);
         }
 
+        // Check and update expired status
+        $member->checkAndUpdateExpiredStatus();
+
         $shopeeAccounts = $member->shopeeAccounts()->orderBy('created_at', 'desc')->get();
 
         return response()->json([
             'success' => true,
-            'shopee_accounts' => $shopeeAccounts
+            'data' => $shopeeAccounts
         ]);
     }
 
@@ -61,7 +69,7 @@ class ShopeeAccountController extends Controller
 
         $member = Member::where('email', $request->email)->first();
         
-        if (!\Hash::check($request->password, $member->password)) {
+        if (!Hash::check($request->password, $member->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials'
@@ -78,7 +86,7 @@ class ShopeeAccountController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Shopee account added successfully',
-            'shopee_account' => $shopeeAccount
+            'data' => $shopeeAccount
         ]);
     }
 
@@ -104,7 +112,7 @@ class ShopeeAccountController extends Controller
 
         $member = Member::where('email', $request->email)->first();
         
-        if (!\Hash::check($request->password, $member->password)) {
+        if (!Hash::check($request->password, $member->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials'
@@ -146,7 +154,7 @@ class ShopeeAccountController extends Controller
 
         $member = Member::where('email', $request->email)->first();
         
-        if (!$member || !\Hash::check($request->password, $member->password)) {
+        if (!$member || !Hash::check($request->password, $member->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials'
@@ -189,7 +197,7 @@ class ShopeeAccountController extends Controller
 
         $member = Member::where('email', $request->email)->first();
         
-        if (!\Hash::check($request->password, $member->password)) {
+        if (!Hash::check($request->password, $member->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials'
