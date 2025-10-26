@@ -58,26 +58,20 @@
                             </svg>
                             Version {{ $latestUpdate->version }}
                         </div>
-                        <p class="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">{{ $latestUpdate->notes }}</p>
+                        <div class="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">{!! nl2br(e($latestUpdate->notes)) !!}</div>
                         <p class="text-sm text-gray-500 mb-8">Dirilis pada {{ $latestUpdate->pub_date->format('d F Y') }}</p>
                         
                         <div class="flex flex-col sm:flex-row justify-center gap-4">
-                            @if(in_array('windows', $latestUpdate->platforms ?? []))
-                                <a href="#" class="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center">
-                                    <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
-                                    </svg>
-                                    Download untuk Windows
-                                </a>
-                            @endif
-                            @if(in_array('macos', $latestUpdate->platforms ?? []))
-                                <a href="#" class="bg-gray-800 hover:bg-gray-900 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center">
-                                    <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Download untuk macOS
-                                </a>
-                            @endif
+                            @foreach($latestUpdate->platforms as $platformName => $platformData)
+                                @if(isset($platformData['url']))
+                                    <a href="{{ $platformData['url'] }}" class="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center">
+                                        <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                                        </svg>
+                                        Download untuk {{ ucfirst($platformName) }}
+                                    </a>
+                                @endif
+                            @endforeach
                         </div>
                     @else
                         <div class="text-gray-500">
@@ -123,18 +117,15 @@
                         
                         <div id="version-{{ $update->id }}" class="hidden px-6 pb-4">
                             <div class="border-t border-gray-200 pt-4">
-                                <p class="text-gray-700 mb-4">{{ $update->notes }}</p>
+                                <div class="text-gray-700 mb-4">{!! nl2br(e($update->notes)) !!}</div>
                                 <div class="flex flex-col sm:flex-row gap-3">
-                                    @if(in_array('windows', $update->platforms ?? []))
-                                        <a href="#" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
-                                            Download Windows
-                                        </a>
-                                    @endif
-                                    @if(in_array('macos', $update->platforms ?? []))
-                                        <a href="#" class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
-                                            Download macOS
-                                        </a>
-                                    @endif
+                                    @foreach($update->platforms as $platformName => $platformData)
+                                        @if(isset($platformData['url']))
+                                            <a href="{{ $platformData['url'] }}" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                                                Download {{ ucfirst($platformName) }}
+                                            </a>
+                                        @endif
+                                    @endforeach
                                 </div>
                             </div>
                         </div>

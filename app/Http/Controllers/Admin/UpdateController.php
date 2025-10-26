@@ -40,7 +40,7 @@ class UpdateController extends Controller
             'platforms' => 'required|array|min:1',
             'platforms.*.name' => 'required_with:platforms.*.file|string',
             'platforms.*.signature' => 'nullable|string',
-            'platforms.*.file' => 'required_with:platforms.*.name|file|mimes:msi,exe,deb,rpm,dmg,pkg|max:102400', // 100MB max
+            'platforms.*.file' => 'required_with:platforms.*.name|file|max:102400', // 100MB max, any file type
             'is_latest' => 'boolean',
             'download_url' => 'nullable|string|url',
         ]);

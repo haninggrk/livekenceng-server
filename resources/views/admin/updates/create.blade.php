@@ -170,9 +170,8 @@ function addPlatform() {
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
             <input type="file" name="platforms[${platformCount}][file]" required
-                   accept=".msi,.exe,.deb,.rpm,.dmg,.pkg"
                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-            <p class="text-xs text-gray-500 mt-1">Supported formats: MSI, EXE, DEB, RPM, DMG, PKG (max 100MB)</p>
+            <p class="text-xs text-gray-500 mt-1">Any file type supported (max 100MB)</p>
         </div>
     `;
     
