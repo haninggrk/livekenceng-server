@@ -108,8 +108,23 @@
                         </div>
                     </div>
                     @endforeach
-                    <p class="text-sm text-gray-500">
-                        <strong>Note:</strong> Platform files cannot be changed after creation. Create a new update to change files.
+                </div>
+
+                <!-- Add New Platforms -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Platforms</h3>
+                    <div id="newPlatformsContainer">
+                        <!-- New platform files will be added here -->
+                    </div>
+                    <button type="button" id="addNewPlatformBtn" 
+                            class="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add New Platform
+                    </button>
+                    <p class="text-sm text-gray-500 mt-2">
+                        <strong>Note:</strong> You can add new platforms to existing updates. Files will be stored with uniform naming: target-version.filetype
                     </p>
                 </div>
 
@@ -144,6 +159,56 @@
 </div>
 
 <script>
+let newPlatformCount = 0;
+
+function addNewPlatform() {
+    newPlatformCount++;
+    const container = document.getElementById('newPlatformsContainer');
+    
+    const platformDiv = document.createElement('div');
+    platformDiv.className = 'border border-gray-200 rounded-lg p-4 mb-4';
+    platformDiv.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <h4 class="text-md font-medium text-gray-900">New Platform ${newPlatformCount}</h4>
+            <button type="button" onclick="removeNewPlatform(this)" 
+                    class="text-red-600 hover:text-red-800 text-sm font-medium">
+                Remove
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Platform Name</label>
+                <input type="text" name="new_platforms[${newPlatformCount}][name]" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                       placeholder="e.g., macos, linux">
+                <p class="text-xs text-gray-500 mt-1">Platform identifier</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Signature (Optional)</label>
+                <input type="text" name="new_platforms[${newPlatformCount}][signature]"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                       placeholder="Base64 encoded signature (optional)">
+                <p class="text-xs text-gray-500 mt-1">Update signature for verification (optional)</p>
+            </div>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
+            <input type="file" name="new_platforms[${newPlatformCount}][file]" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <p class="text-xs text-gray-500 mt-1">Any file type supported (max 100MB)</p>
+        </div>
+    `;
+    
+    container.appendChild(platformDiv);
+}
+
+function removeNewPlatform(button) {
+    button.closest('.border').remove();
+}
+
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toastIcon');
@@ -162,6 +227,9 @@ function showToast(message, type = 'success') {
         toast.classList.add('hidden');
     }, 3000);
 }
+
+// Add event listener for add platform button
+document.getElementById('addNewPlatformBtn').addEventListener('click', addNewPlatform);
 
 document.getElementById('editUpdateForm').addEventListener('submit', function(e) {
     e.preventDefault();

@@ -61,10 +61,13 @@ class UpdateController extends Controller
             // Only process platforms that have both name and file
             if (isset($platform['name']) && isset($platform['file']) && $platform['file']->isValid()) {
                 $file = $platform['file'];
-                $filename = $file->getClientOriginalName();
+                $fileExtension = $file->getClientOriginalExtension();
                 
-                // Store file in public/releases directory
-                $filePath = $file->storeAs('releases', $filename, 'public');
+                // Create uniform filename: target-version.filetype
+                $uniformFilename = $request->target . '-' . $request->version . '.' . $fileExtension;
+                
+                // Store file with uniform name
+                $filePath = $file->storeAs('releases', $uniformFilename, 'public');
                 
                 $platforms[$platform['name']] = [
                     'signature' => $platform['signature'] ?? null,
@@ -111,6 +114,10 @@ class UpdateController extends Controller
             'is_active' => 'boolean',
             'is_latest' => 'boolean',
             'download_url' => 'nullable|string|url',
+            'new_platforms' => 'nullable|array',
+            'new_platforms.*.name' => 'required_with:new_platforms.*.file|string',
+            'new_platforms.*.signature' => 'nullable|string',
+            'new_platforms.*.file' => 'required_with:new_platforms.*.name|file|max:102400',
         ]);
 
         if ($validator->fails()) {
@@ -122,6 +129,31 @@ class UpdateController extends Controller
 
         $data = $request->only(['target', 'version', 'notes', 'pub_date', 'is_active', 'is_latest', 'download_url']);
         $data['pub_date'] = \Carbon\Carbon::parse($request->pub_date);
+
+        // Handle new platform uploads
+        if ($request->has('new_platforms')) {
+            $existingPlatforms = $update->platforms;
+            
+            foreach ($request->new_platforms as $platform) {
+                if (isset($platform['name']) && isset($platform['file']) && $platform['file']->isValid()) {
+                    $file = $platform['file'];
+                    $fileExtension = $file->getClientOriginalExtension();
+                    
+                    // Create uniform filename: target-version.filetype
+                    $uniformFilename = $request->target . '-' . $request->version . '.' . $fileExtension;
+                    
+                    // Store file with uniform name
+                    $filePath = $file->storeAs('releases', $uniformFilename, 'public');
+                    
+                    $existingPlatforms[$platform['name']] = [
+                        'signature' => $platform['signature'] ?? null,
+                        'url' => asset('storage/' . $filePath)
+                    ];
+                }
+            }
+            
+            $data['platforms'] = $existingPlatforms;
+        }
 
         // If this is marked as latest, unmark all other versions as latest
         if ($request->is_latest) {

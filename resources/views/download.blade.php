@@ -64,11 +64,20 @@
                         <div class="flex flex-col sm:flex-row justify-center gap-4">
                             @foreach($latestUpdate->platforms as $platformName => $platformData)
                                 @if(isset($platformData['url']))
+                                    @php
+                                        $filePath = str_replace(asset('storage/'), '', $platformData['url']);
+                                        $fullPath = storage_path('app/public/' . $filePath);
+                                        $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
+                                        $fileSizeFormatted = $fileSize > 0 ? number_format($fileSize / 1024 / 1024, 1) . ' MB' : 'Unknown size';
+                                    @endphp
                                     <a href="{{ $platformData['url'] }}" class="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center">
                                         <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
                                         </svg>
-                                        Download untuk {{ ucfirst($platformName) }}
+                                        <div class="text-left">
+                                            <div>Download untuk {{ ucfirst($platformName) }}</div>
+                                            <div class="text-sm opacity-90">{{ $fileSizeFormatted }}</div>
+                                        </div>
                                     </a>
                                 @endif
                             @endforeach
@@ -121,8 +130,15 @@
                                 <div class="flex flex-col sm:flex-row gap-3">
                                     @foreach($update->platforms as $platformName => $platformData)
                                         @if(isset($platformData['url']))
+                                            @php
+                                                $filePath = str_replace(asset('storage/'), '', $platformData['url']);
+                                                $fullPath = storage_path('app/public/' . $filePath);
+                                                $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
+                                                $fileSizeFormatted = $fileSize > 0 ? number_format($fileSize / 1024 / 1024, 1) . ' MB' : 'Unknown size';
+                                            @endphp
                                             <a href="{{ $platformData['url'] }}" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
-                                                Download {{ ucfirst($platformName) }}
+                                                <div>Download {{ ucfirst($platformName) }}</div>
+                                                <div class="text-xs opacity-90">{{ $fileSizeFormatted }}</div>
                                             </a>
                                         @endif
                                     @endforeach
