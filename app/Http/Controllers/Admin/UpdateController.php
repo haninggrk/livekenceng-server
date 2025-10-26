@@ -39,8 +39,7 @@ class UpdateController extends Controller
             'pub_date' => 'required|date',
             'platforms' => 'required|array',
             'platforms.*.name' => 'required|string',
-            'platforms.*.signature' => 'required|string',
-            'platforms.*.url' => 'required|string',
+            'platforms.*.signature' => 'nullable|string',
             'platforms.*.file' => 'required|file|mimes:msi,exe,deb,rpm,dmg,pkg|max:102400', // 100MB max
             'is_latest' => 'boolean',
             'download_url' => 'nullable|string|url',
@@ -66,7 +65,7 @@ class UpdateController extends Controller
             $filePath = $file->storeAs('releases', $filename, 'public');
             
             $platforms[$platform['name']] = [
-                'signature' => $platform['signature'],
+                'signature' => $platform['signature'] ?? null,
                 'url' => asset('storage/' . $filePath)
             ];
         }

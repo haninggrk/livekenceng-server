@@ -159,11 +159,11 @@ function addPlatform() {
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Signature</label>
-                <input type="text" name="platforms[${platformCount}][signature]" required
+                <label class="block text-sm font-medium text-gray-700 mb-2">Signature (Optional)</label>
+                <input type="text" name="platforms[${platformCount}][signature]"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                       placeholder="Base64 encoded signature">
-                <p class="text-xs text-gray-500 mt-1">Update signature for verification</p>
+                       placeholder="Base64 encoded signature (optional)">
+                <p class="text-xs text-gray-500 mt-1">Update signature for verification (optional)</p>
             </div>
         </div>
         
