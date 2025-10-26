@@ -14,6 +14,8 @@ class Reseller extends Authenticatable
         'email',
         'password',
         'balance',
+        'balance_spent',
+        'profit',
         'discount_percentage',
     ];
 
@@ -23,6 +25,8 @@ class Reseller extends Authenticatable
 
     protected $casts = [
         'balance' => 'decimal:2',
+        'balance_spent' => 'decimal:2',
+        'profit' => 'decimal:2',
         'discount_percentage' => 'decimal:2',
     ];
 
@@ -58,6 +62,16 @@ class Reseller extends Authenticatable
     public function addBalance(float $amount): void
     {
         $this->balance += $amount;
+        $this->save();
+    }
+
+    /**
+     * Track balance spent and calculate profit
+     */
+    public function trackPurchase(float $discountedPrice, float $fullPrice): void
+    {
+        $this->balance_spent += $discountedPrice;
+        $this->profit += ($fullPrice - $discountedPrice);
         $this->save();
     }
 
