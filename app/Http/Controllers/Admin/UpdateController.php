@@ -37,10 +37,10 @@ class UpdateController extends Controller
             'version' => 'required|string|max:255',
             'notes' => 'nullable|string',
             'pub_date' => 'required|date',
-            'platforms' => 'required|array',
-            'platforms.*.name' => 'required|string',
+            'platforms' => 'required|array|min:1',
+            'platforms.*.name' => 'required_with:platforms.*.file|string',
             'platforms.*.signature' => 'nullable|string',
-            'platforms.*.file' => 'required|file|mimes:msi,exe,deb,rpm,dmg,pkg|max:102400', // 100MB max
+            'platforms.*.file' => 'required_with:platforms.*.name|file|mimes:msi,exe,deb,rpm,dmg,pkg|max:102400', // 100MB max
             'is_latest' => 'boolean',
             'download_url' => 'nullable|string|url',
         ]);
@@ -58,16 +58,19 @@ class UpdateController extends Controller
         // Handle file uploads and create platforms array
         $platforms = [];
         foreach ($request->platforms as $platform) {
-            $file = $platform['file'];
-            $filename = $file->getClientOriginalName();
-            
-            // Store file in public/releases directory
-            $filePath = $file->storeAs('releases', $filename, 'public');
-            
-            $platforms[$platform['name']] = [
-                'signature' => $platform['signature'] ?? null,
-                'url' => asset('storage/' . $filePath)
-            ];
+            // Only process platforms that have both name and file
+            if (isset($platform['name']) && isset($platform['file']) && $platform['file']->isValid()) {
+                $file = $platform['file'];
+                $filename = $file->getClientOriginalName();
+                
+                // Store file in public/releases directory
+                $filePath = $file->storeAs('releases', $filename, 'public');
+                
+                $platforms[$platform['name']] = [
+                    'signature' => $platform['signature'] ?? null,
+                    'url' => asset('storage/' . $filePath)
+                ];
+            }
         }
         
         $data['platforms'] = $platforms;
