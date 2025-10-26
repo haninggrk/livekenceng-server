@@ -16,6 +16,7 @@
                     <a href="#features" class="text-gray-600 hover:text-primary-600 transition-colors">Fitur</a>
                     <a href="#pricing" class="text-gray-600 hover:text-primary-600 transition-colors">Harga</a>
                     <a href="#contact" class="text-gray-600 hover:text-primary-600 transition-colors">Kontak</a>
+                    <a href="{{ route('download') }}" class="text-gray-600 hover:text-primary-600 transition-colors">Download</a>
                 </nav>
                 
                 <!-- CTA Button (Primary: WhatsApp) -->

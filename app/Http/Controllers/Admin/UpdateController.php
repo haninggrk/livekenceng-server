@@ -81,10 +81,6 @@ class UpdateController extends Controller
                          ->update(['is_latest' => false]);
         }
 
-        // Deactivate previous versions for the same target
-        SoftwareUpdate::where('target', $request->target)
-                     ->update(['is_active' => false]);
-
         $update = SoftwareUpdate::create($data);
 
         return response()->json([
