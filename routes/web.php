@@ -13,6 +13,21 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Download page
+Route::get('/download', function () {
+    $latestUpdate = \App\Models\SoftwareUpdate::where('is_active', true)
+        ->where('is_latest', true)
+        ->first();
+    
+    $previousUpdates = \App\Models\SoftwareUpdate::where('is_active', true)
+        ->where('is_latest', false)
+        ->orderBy('pub_date', 'desc')
+        ->take(10)
+        ->get();
+    
+    return view('download', compact('latestUpdate', 'previousUpdates'));
+})->name('download');
+
 // Fallback login route alias used by framework redirections
 Route::get('/login', function () {
     return redirect()->route('admin.login');
@@ -35,6 +50,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         $member = \App\Models\Member::findOrFail($id);
         return response()->json(['success' => true, 'member' => $member]);
     });
+    Route::get('/members/{member}/edit', [DashboardController::class, 'editMember'])->name('admin.members.edit');
     Route::post('/members', [DashboardController::class, 'store']);
     Route::put('/members/{member}', [DashboardController::class, 'update']);
     Route::delete('/members/{member}', [DashboardController::class, 'destroy']);
@@ -75,6 +91,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/updates/{update}', [UpdateController::class, 'update'])->name('admin.updates.update');
     Route::delete('/updates/{update}', [UpdateController::class, 'destroy'])->name('admin.updates.destroy');
     Route::post('/updates/{update}/toggle-active', [UpdateController::class, 'toggleActive'])->name('admin.updates.toggle-active');
+    Route::post('/updates/{update}/set-latest', [UpdateController::class, 'setLatest'])->name('admin.updates.set-latest');
     Route::get('/updates-data', [UpdateController::class, 'getUpdates'])->name('admin.updates.data');
     
     // Shopee accounts and Telegram management routes (AJAX)

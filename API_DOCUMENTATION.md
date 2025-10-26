@@ -649,7 +649,7 @@ function checkSubscriptionOnStartup() {
 }
 
 // Action: Show error, allow user to re-enter key
-```
+   ```
 
 ---
 

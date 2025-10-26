@@ -12,13 +12,16 @@ class SoftwareUpdate extends Model
         'notes',
         'pub_date',
         'platforms',
-        'is_active'
+        'is_active',
+        'is_latest',
+        'download_url'
     ];
 
     protected $casts = [
         'pub_date' => 'datetime',
         'platforms' => 'array',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'is_latest' => 'boolean'
     ];
 
     /**

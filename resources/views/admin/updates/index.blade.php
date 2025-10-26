@@ -58,6 +58,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latest</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Release Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platforms</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -77,6 +78,15 @@
                                     {{ $update->is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($update->is_latest)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        Latest
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $update->pub_date->format('M d, Y H:i') }}
                             </td>
@@ -90,6 +100,12 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                @if(!$update->is_latest)
+                                    <button onclick="setLatest({{ $update->id }})" 
+                                            class="text-purple-600 hover:text-purple-900">
+                                        Set Latest
+                                    </button>
+                                @endif
                                 <button onclick="toggleActive({{ $update->id }})" 
                                         class="text-{{ $update->is_active ? 'yellow' : 'green' }}-600 hover:text-{{ $update->is_active ? 'yellow' : 'green' }}-900">
                                     {{ $update->is_active ? 'Deactivate' : 'Activate' }}
@@ -180,6 +196,32 @@ function toggleActive(updateId) {
     .catch(error => {
         showToast('Error updating status', 'error');
     });
+}
+
+function setLatest(updateId) {
+    if (confirm('Are you sure you want to set this version as the latest? This will unmark all other versions as latest.')) {
+        fetch(`/admin/updates/${updateId}/set-latest`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showToast('Error setting latest version', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Error setting latest version', 'error');
+        });
+    }
 }
 
 function deleteUpdate(updateId) {

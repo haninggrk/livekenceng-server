@@ -42,6 +42,8 @@ class UpdateController extends Controller
             'platforms.*.signature' => 'required|string',
             'platforms.*.url' => 'required|string',
             'platforms.*.file' => 'required|file|mimes:msi,exe,deb,rpm,dmg,pkg|max:102400', // 100MB max
+            'is_latest' => 'boolean',
+            'download_url' => 'nullable|string|url',
         ]);
 
         if ($validator->fails()) {
@@ -51,7 +53,7 @@ class UpdateController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['target', 'version', 'notes', 'pub_date']);
+        $data = $request->only(['target', 'version', 'notes', 'pub_date', 'is_latest', 'download_url']);
         $data['pub_date'] = \Carbon\Carbon::parse($request->pub_date);
         
         // Handle file uploads and create platforms array
@@ -70,6 +72,12 @@ class UpdateController extends Controller
         }
         
         $data['platforms'] = $platforms;
+
+        // If this is marked as latest, unmark all other versions as latest
+        if ($request->is_latest) {
+            SoftwareUpdate::where('target', $request->target)
+                         ->update(['is_latest' => false]);
+        }
 
         // Deactivate previous versions for the same target
         SoftwareUpdate::where('target', $request->target)
@@ -103,6 +111,8 @@ class UpdateController extends Controller
             'notes' => 'nullable|string',
             'pub_date' => 'required|date',
             'is_active' => 'boolean',
+            'is_latest' => 'boolean',
+            'download_url' => 'nullable|string|url',
         ]);
 
         if ($validator->fails()) {
@@ -112,8 +122,15 @@ class UpdateController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['target', 'version', 'notes', 'pub_date', 'is_active']);
+        $data = $request->only(['target', 'version', 'notes', 'pub_date', 'is_active', 'is_latest', 'download_url']);
         $data['pub_date'] = \Carbon\Carbon::parse($request->pub_date);
+
+        // If this is marked as latest, unmark all other versions as latest
+        if ($request->is_latest) {
+            SoftwareUpdate::where('target', $request->target)
+                         ->where('id', '!=', $update->id)
+                         ->update(['is_latest' => false]);
+        }
 
         $update->update($data);
 
@@ -155,6 +172,26 @@ class UpdateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Update status updated successfully',
+            'update' => $update
+        ]);
+    }
+
+    /**
+     * Set update as latest version
+     */
+    public function setLatest(SoftwareUpdate $update)
+    {
+        // Unmark all other versions as latest for the same target
+        SoftwareUpdate::where('target', $update->target)
+                     ->where('id', '!=', $update->id)
+                     ->update(['is_latest' => false]);
+
+        // Mark this version as latest
+        $update->update(['is_latest' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Version set as latest successfully',
             'update' => $update
         ]);
     }

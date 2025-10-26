@@ -42,6 +42,15 @@ class DashboardController extends Controller
     }
 
     /**
+     * Show member edit page
+     */
+    public function editMember(Member $member)
+    {
+        $member->load(['shopeeAccounts']);
+        return view('admin.members.edit', compact('member'));
+    }
+
+    /**
      * Create new member
      */
     public function store(Request $request)
@@ -49,12 +58,16 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'email' => 'required|email|unique:members,email',
             'password' => 'required|min:6',
+            'machine_id' => 'nullable|string|min:10|max:20',
+            'telegram_username' => 'nullable|string|max:255',
             'expiry_date' => 'nullable|date',
         ]);
 
         $member = Member::create([
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'machine_id' => $validated['machine_id'] ?? null,
+            'telegram_username' => $validated['telegram_username'] ?? null,
             'expiry_date' => $validated['expiry_date'] ?? null,
         ]);
 
@@ -73,7 +86,8 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'email' => 'required|email|unique:members,email,' . $member->id,
             'password' => 'nullable|min:6',
-            'machine_id' => 'nullable|string',
+            'machine_id' => 'nullable|string|min:10|max:20',
+            'telegram_username' => 'nullable|string|max:255',
             'expiry_date' => 'nullable|date',
         ]);
 
@@ -85,6 +99,10 @@ class DashboardController extends Controller
 
         if (isset($validated['machine_id'])) {
             $member->machine_id = $validated['machine_id'];
+        }
+
+        if (isset($validated['telegram_username'])) {
+            $member->telegram_username = $validated['telegram_username'];
         }
 
         if (isset($validated['expiry_date'])) {

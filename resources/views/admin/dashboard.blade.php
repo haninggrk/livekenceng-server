@@ -13,14 +13,14 @@
                     <span class="ml-3 text-2xl font-bold text-gray-900">Livekenceng Admin</span>
                 </div>
                 
-                <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-4">
                     <span class="text-gray-600">{{ auth()->user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}">
-                        @csrf
+                    @csrf
                         <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            Logout
-                        </button>
-                    </form>
+                        Logout
+                    </button>
+                </form>
                 </div>
             </div>
         </div>
@@ -106,22 +106,24 @@
                     </button>
                 </div>
 
-                <div class="overflow-x-auto">
+            <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Machine ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="membersTableBody" class="bg-white divide-y divide-gray-200">
-                            @foreach($members as $member)
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Machine ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telegram</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTableBody" class="bg-white divide-y divide-gray-200">
+                        @foreach($members as $member)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $member->email }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $member->machine_id ?? '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $member->telegram_username ?? '-' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $member->expiry_date?->format('Y-m-d H:i') ?? '-' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($member->isActive())
@@ -131,7 +133,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onclick="editMember({{ $member->id }})" class="text-primary-600 hover:text-primary-900 mr-3">Edit</button>
+                                    <a href="{{ route('admin.members.edit', $member->id) }}" class="text-primary-600 hover:text-primary-900 mr-3">Edit</a>
                                     <button onclick="deleteMember({{ $member->id }})" class="text-red-600 hover:text-red-900">Delete</button>
                                 </td>
                             </tr>
@@ -147,7 +149,7 @@
                     <h2 class="text-2xl font-bold text-gray-900">License Key Management</h2>
                     <button onclick="openGenerateLicenseModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
                         + Generate License
-                    </button>
+                                </button>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -181,13 +183,13 @@
                                     @if(!$license->is_used)
                                         <button onclick="deleteLicense({{ $license->id }})" class="text-red-600 hover:text-red-900">Delete</button>
                                     @endif
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
+        </div>
 
             <!-- Resellers Tab -->
             <div id="content-resellers" class="tab-content p-6 hidden">
@@ -334,34 +336,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Eligible Cookies Section -->
-                <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                    <div class="p-6 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Eligible Cookies</h3>
-                        <p class="text-sm text-gray-600 mt-1">Active members with Shopee accounts and Telegram</p>
-                    </div>
-                    <div class="p-6">
-                        <button onclick="loadEligibleCookies()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors mb-4">
-                            Load Eligible Cookies
-                        </button>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telegram</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shopee Accounts</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200" id="eligibleCookiesTableBody">
-                                    <!-- Eligible cookies will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -387,7 +361,13 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Machine ID</label>
-                <input type="text" id="memberMachineId" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <input type="text" id="memberMachineId" maxlength="20" minlength="10" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <p class="text-xs text-gray-500 mt-1">Must be 10-20 characters</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Telegram Username</label>
+                <input type="text" id="memberTelegramUsername" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="@username">
             </div>
 
             <div class="mb-6">
@@ -570,8 +550,8 @@
             <div class="mb-4">
                 <label for="shopeeName" class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
                 <input type="text" id="shopeeName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="e.g., My Shopee Account" required>
-            </div>
-            
+    </div>
+
             <div class="mb-4">
                 <label for="shopeeCookie" class="block text-sm font-medium text-gray-700 mb-2">Cookie</label>
                 <textarea id="shopeeCookie" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="session_id=abc123; user_id=456; ..." required></textarea>
@@ -646,6 +626,7 @@
                     document.getElementById('memberId').value = member.id;
                     document.getElementById('memberEmail').value = member.email;
                     document.getElementById('memberMachineId').value = member.machine_id || '';
+                    document.getElementById('memberTelegramUsername').value = member.telegram_username || '';
                     document.getElementById('memberExpiryDate').value = member.expiry_date ? member.expiry_date.slice(0, 16) : '';
                     document.getElementById('memberPassword').required = false;
                     document.getElementById('memberModal').classList.remove('hidden');
@@ -682,6 +663,7 @@
         const data = {
             email: document.getElementById('memberEmail').value,
             machine_id: document.getElementById('memberMachineId').value,
+            telegram_username: document.getElementById('memberTelegramUsername').value,
             expiry_date: document.getElementById('memberExpiryDate').value,
         };
         
@@ -746,8 +728,8 @@
     }
 
     document.getElementById('licenseForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
+            e.preventDefault();
+            
         const data = {
             plan_id: document.getElementById('licensePlanId').value,
             quantity: document.getElementById('licenseQuantity').value,
@@ -755,8 +737,8 @@
         
         fetch('/admin/licenses/generate', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+                    headers: {
+                        'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
@@ -879,8 +861,8 @@
         const amount = document.getElementById('balanceAmount').value;
         
         fetch(`/admin/resellers/${id}/add-balance`, {
-            method: 'POST',
-            headers: {
+                    method: 'POST',
+                    headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
@@ -1016,7 +998,7 @@
         
         fetch(url, {
             method: method,
-            headers: {
+                    headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken
             },
@@ -1114,37 +1096,6 @@
             });
     }
 
-    function loadEligibleCookies() {
-        fetch('/api/shopee/eligible-cookies')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const tbody = document.getElementById('eligibleCookiesTableBody');
-                    tbody.innerHTML = '';
-                    
-                    data.eligible_members.forEach(member => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${member.email}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${member.telegram_username || 'Not set'}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${member.shopee_accounts.length} accounts</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="viewMemberDetails(${member.member_id})" class="text-primary-600 hover:text-primary-900">View Details</button>
-                            </td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error loading eligible cookies:', error);
-            });
-    }
-
-    function viewMemberDetails(memberId) {
-        // Load member details in a modal or new page
-        alert('Member details for ID: ' + memberId);
-    }
 
     // Load shopee accounts when tab is switched
     document.addEventListener('DOMContentLoaded', function() {
@@ -1156,7 +1107,7 @@
             }
         };
     });
-</script>
+    </script>
 @endpush
 @endsection
 
