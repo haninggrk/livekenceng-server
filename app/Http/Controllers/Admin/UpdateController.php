@@ -118,6 +118,8 @@ class UpdateController extends Controller
             'new_platforms.*.name' => 'required_with:new_platforms.*.file|string',
             'new_platforms.*.signature' => 'nullable|string',
             'new_platforms.*.file' => 'required_with:new_platforms.*.name|file|max:102400',
+            'platforms_to_delete' => 'nullable|array',
+            'platforms_to_delete.*' => 'string',
         ]);
 
         if ($validator->fails()) {
@@ -130,10 +132,28 @@ class UpdateController extends Controller
         $data = $request->only(['target', 'version', 'notes', 'pub_date', 'is_active', 'is_latest', 'download_url']);
         $data['pub_date'] = \Carbon\Carbon::parse($request->pub_date);
 
+        // Handle platform deletions and new platform uploads
+        $existingPlatforms = $update->platforms;
+        
+        // Delete platforms marked for deletion
+        if ($request->has('platforms_to_delete')) {
+            foreach ($request->platforms_to_delete as $platformToDelete) {
+                if (isset($existingPlatforms[$platformToDelete])) {
+                    // Delete the file from storage
+                    $platformData = $existingPlatforms[$platformToDelete];
+                    if (isset($platformData['url'])) {
+                        $filePath = str_replace(asset('storage/'), '', $platformData['url']);
+                        Storage::disk('public')->delete($filePath);
+                    }
+                    
+                    // Remove from platforms array
+                    unset($existingPlatforms[$platformToDelete]);
+                }
+            }
+        }
+        
         // Handle new platform uploads
         if ($request->has('new_platforms')) {
-            $existingPlatforms = $update->platforms;
-            
             foreach ($request->new_platforms as $platform) {
                 if (isset($platform['name']) && isset($platform['file']) && $platform['file']->isValid()) {
                     $file = $platform['file'];
@@ -151,7 +171,10 @@ class UpdateController extends Controller
                     ];
                 }
             }
-            
+        }
+        
+        // Update platforms data if there were changes
+        if ($request->has('platforms_to_delete') || $request->has('new_platforms')) {
             $data['platforms'] = $existingPlatforms;
         }
 

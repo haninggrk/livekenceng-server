@@ -87,10 +87,16 @@
                 <div class="mb-8">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Current Platforms</h3>
                     @foreach($update->platforms as $platform => $data)
-                    <div class="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+                    <div class="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50" id="platform-{{ $loop->index }}">
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-md font-medium text-gray-900">{{ $platform }}</h4>
-                            <span class="text-sm text-gray-500">Current</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-500">Current</span>
+                                <button type="button" onclick="deletePlatform('{{ $platform }}', {{ $loop->index }})" 
+                                        class="text-red-600 hover:text-red-800 text-sm font-medium bg-red-50 hover:bg-red-100 px-3 py-1 rounded-lg transition-colors">
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -209,6 +215,34 @@ function removeNewPlatform(button) {
     button.closest('.border').remove();
 }
 
+function deletePlatform(platformName, index) {
+    if (confirm(`Are you sure you want to delete the "${platformName}" platform? This action cannot be undone.`)) {
+        // Add to deletion list
+        if (!window.platformsToDelete) {
+            window.platformsToDelete = [];
+        }
+        window.platformsToDelete.push(platformName);
+        
+        // Hide the platform div
+        const platformDiv = document.getElementById(`platform-${index}`);
+        if (platformDiv) {
+            platformDiv.style.opacity = '0.5';
+            platformDiv.style.pointerEvents = 'none';
+            
+            // Add a "deleted" indicator
+            const deleteButton = platformDiv.querySelector('button[onclick*="deletePlatform"]');
+            if (deleteButton) {
+                deleteButton.textContent = 'Deleted';
+                deleteButton.disabled = true;
+                deleteButton.classList.remove('text-red-600', 'hover:text-red-800', 'bg-red-50', 'hover:bg-red-100');
+                deleteButton.classList.add('text-gray-500', 'bg-gray-200');
+            }
+        }
+        
+        showToast(`Platform "${platformName}" marked for deletion`, 'success');
+    }
+}
+
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toastIcon');
@@ -235,6 +269,14 @@ document.getElementById('editUpdateForm').addEventListener('submit', function(e)
     e.preventDefault();
     
     const formData = new FormData(this);
+    
+    // Add platforms to delete
+    if (window.platformsToDelete && window.platformsToDelete.length > 0) {
+        window.platformsToDelete.forEach((platform, index) => {
+            formData.append(`platforms_to_delete[${index}]`, platform);
+        });
+    }
+    
     const submitBtn = this.querySelector('button[type="submit"]');
     
     submitBtn.disabled = true;
