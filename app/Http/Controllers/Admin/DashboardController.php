@@ -31,9 +31,61 @@ class DashboardController extends Controller
     /**
      * Get all members (AJAX)
      */
-    public function getMembers()
+    public function getMembers(Request $request)
     {
-        $members = Member::orderBy('created_at', 'desc')->get();
+        $query = Member::with(['licenseKeys']);
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                  ->orWhere('telegram_username', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->has('status') && !empty($request->status)) {
+            if ($request->status === 'active') {
+                $query->where(function($q) {
+                    $q->whereNull('expiry_date')
+                      ->orWhere('expiry_date', '>', now());
+                });
+            } elseif ($request->status === 'expired') {
+                $query->where('expiry_date', '<=', now());
+            }
+        }
+
+        // Sorting
+        if ($request->has('sort_by') && !empty($request->sort_by)) {
+            $sortBy = $request->sort_by;
+            switch ($sortBy) {
+                case 'created_at_asc':
+                    $query->orderBy('created_at', 'asc');
+                    break;
+                case 'created_at_desc':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                case 'expiry_date_asc':
+                    $query->orderBy('expiry_date', 'asc');
+                    break;
+                case 'expiry_date_desc':
+                    $query->orderBy('expiry_date', 'desc');
+                    break;
+                case 'email_asc':
+                    $query->orderBy('email', 'asc');
+                    break;
+                case 'email_desc':
+                    $query->orderBy('email', 'desc');
+                    break;
+                default:
+                    $query->orderBy('created_at', 'desc');
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $members = $query->get();
         
         return response()->json([
             'success' => true,
@@ -58,7 +110,7 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'email' => 'required|email|unique:members,email',
             'password' => 'required|min:6',
-            'machine_id' => 'nullable|string|min:10|max:20',
+            'machine_id' => 'nullable|string',
             'telegram_username' => 'nullable|string|max:255',
             'expiry_date' => 'nullable|date',
         ]);
@@ -86,7 +138,7 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'email' => 'required|email|unique:members,email,' . $member->id,
             'password' => 'nullable|min:6',
-            'machine_id' => 'nullable|string|min:10|max:20',
+            'machine_id' => 'nullable|string',
             'telegram_username' => 'nullable|string|max:255',
             'expiry_date' => 'nullable|date',
         ]);

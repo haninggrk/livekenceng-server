@@ -62,9 +62,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Machine ID</label>
                             <input type="text" id="machine_id" value="{{ $member->machine_id }}" 
-                                   maxlength="20" minlength="10"
                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                            <p class="text-xs text-gray-500 mt-1">Must be 10-20 characters</p>
                         </div>
 
                         <div>

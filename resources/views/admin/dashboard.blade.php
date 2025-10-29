@@ -103,6 +103,48 @@
                     </button>
                 </div>
 
+                <!-- Search and Filter Controls -->
+                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Search -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                            <input type="text" id="memberSearch" placeholder="Search by email or telegram..." 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        </div>
+                        
+                        <!-- Status Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                            <select id="memberStatusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Sort By -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                            <select id="memberSortBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                <option value="created_at_desc">Newest First</option>
+                                <option value="created_at_asc">Oldest First</option>
+                                <option value="expiry_date_desc">Expiry Date (Latest)</option>
+                                <option value="expiry_date_asc">Expiry Date (Earliest)</option>
+                                <option value="email_asc">Email (A-Z)</option>
+                                <option value="email_desc">Email (Z-A)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Clear Filters -->
+                        <div class="flex items-end">
+                            <button onclick="clearMemberFilters()" class="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -116,26 +158,8 @@
                         </tr>
                     </thead>
                     <tbody id="membersTableBody" class="bg-white divide-y divide-gray-200">
-                        @foreach($members as $member)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $member->email }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $member->machine_id ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $member->telegram_username ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $member->expiry_date?->format('Y-m-d H:i') ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($member->isActive())
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                                    @else
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Expired</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{{ route('admin.members.edit', $member->id) }}" class="text-primary-600 hover:text-primary-900 mr-3">Edit</a>
-                                    <button onclick="deleteMember({{ $member->id }})" class="text-red-600 hover:text-red-900">Delete</button>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
+                        <!-- Members will be loaded dynamically via JavaScript -->
+                    </tbody>
                     </table>
                 </div>
             </div>
@@ -311,8 +335,7 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Machine ID</label>
-                <input type="text" id="memberMachineId" maxlength="20" minlength="10" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                <p class="text-xs text-gray-500 mt-1">Must be 10-20 characters</p>
+                <input type="text" id="memberMachineId" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
             </div>
 
             <div class="mb-4">
@@ -506,6 +529,84 @@
     }
 
     // Member Management
+    function loadMembers() {
+        const search = document.getElementById('memberSearch').value;
+        const status = document.getElementById('memberStatusFilter').value;
+        const sortBy = document.getElementById('memberSortBy').value;
+        
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        if (sortBy) params.append('sort_by', sortBy);
+        
+        fetch(`/admin/members?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderMembersTable(data.members);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading members:', error);
+            });
+    }
+
+    function renderMembersTable(members) {
+        const tbody = document.getElementById('membersTableBody');
+        tbody.innerHTML = '';
+        
+        members.forEach(member => {
+            const row = document.createElement('tr');
+            const isActive = member.expiry_date ? new Date(member.expiry_date) > new Date() : true;
+            const statusBadge = isActive 
+                ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>'
+                : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Expired</span>';
+            
+            const expiryDate = member.expiry_date 
+                ? new Date(member.expiry_date).toLocaleString('en-CA', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(',', '')
+                : '-';
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${member.email}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${member.machine_id || '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${member.telegram_username || '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${expiryDate}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="/admin/members/${member.id}/edit" class="text-primary-600 hover:text-primary-900 mr-3">Edit</a>
+                    <button onclick="deleteMember(${member.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function clearMemberFilters() {
+        document.getElementById('memberSearch').value = '';
+        document.getElementById('memberStatusFilter').value = '';
+        document.getElementById('memberSortBy').value = 'created_at_desc';
+        loadMembers();
+    }
+
+    // Debounce function for search input
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
     function openAddMemberModal() {
         document.getElementById('memberModalTitle').textContent = 'Add Member';
         document.getElementById('memberForm').reset();
@@ -552,7 +653,10 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                showToast(data.message, 'success');
+                loadMembers();
+            } else {
+                showToast(data.message, 'error');
             }
         });
     }
@@ -870,6 +974,14 @@
                 switchTab(saved);
             }
         } catch (e) {}
+        
+        // Load members on page load
+        loadMembers();
+        
+        // Add event listeners for member filters
+        document.getElementById('memberSearch').addEventListener('input', debounce(loadMembers, 300));
+        document.getElementById('memberStatusFilter').addEventListener('change', loadMembers);
+        document.getElementById('memberSortBy').addEventListener('change', loadMembers);
     });
 
     </script>
