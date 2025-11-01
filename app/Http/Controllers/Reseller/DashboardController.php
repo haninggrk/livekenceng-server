@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Reseller;
 
 use App\Http\Controllers\Controller;
+use App\Models\App;
 use App\Models\LicenseKey;
 use App\Models\LicensePlan;
+use App\Models\Reseller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,21 +20,44 @@ class DashboardController extends Controller
     {
         $reseller = Auth::guard('reseller')->user();
         $licenses = LicenseKey::where('reseller_id', $reseller->id)
-            ->with(['member'])
+            ->with(['member', 'app'])
             ->orderBy('created_at', 'desc')
             ->get();
-        $plans = LicensePlan::where('is_active', true)->orderBy('duration_days')->get();
         
-        return view('reseller.dashboard', compact('reseller', 'licenses', 'plans'));
+        // Get all apps
+        $apps = App::withCount(['licensePlans' => function($query) {
+                $query->where('is_active', true);
+            }])
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return view('reseller.dashboard', compact('reseller', 'licenses', 'apps'));
     }
 
     /**
      * Get license pricing
      */
-    public function getPricing()
+    public function getPricing(Request $request)
     {
         $reseller = Auth::guard('reseller')->user();
-        $plans = LicensePlan::where('is_active', true)->orderBy('duration_days')->get();
+        
+        $query = LicensePlan::where('is_active', true);
+        
+        // Filter by app_id if provided
+        if ($request->has('app_id')) {
+            if ($request->app_id === null || $request->app_id === '') {
+                // Null app_id means livekenceng (legacy)
+                $livekencengApp = App::where('identifier', 'livekenceng')->first();
+                if ($livekencengApp) {
+                    $query->where('app_id', $livekencengApp->id);
+                }
+            } else {
+                $query->where('app_id', $request->app_id);
+            }
+        }
+        
+        $plans = $query->orderBy('duration_days')->get();
         $pricing = $plans->map(function ($plan) use ($reseller) {
             $basePrice = (float)$plan->price;
             return [
@@ -58,32 +83,15 @@ class DashboardController extends Controller
     public function generateLicense(Request $request)
     {
         $validated = $request->validate([
-            'duration_days' => 'required_without:plan_id|in:1,3,7,14,30',
-            'plan_id' => 'required_without:duration_days|integer|exists:license_plans,id',
+            'plan_id' => 'required|integer|exists:license_plans,id',
             'quantity' => 'required|integer|min:1|max:100',
         ]);
 
         $reseller = Auth::guard('reseller')->user();
 
-        // Prefer plan_id if provided; fallback to duration_days (legacy)
-        $plan = null;
-        if ($request->filled('plan_id')) {
-            $plan = LicensePlan::where('is_active', true)->findOrFail($request->input('plan_id'));
-            $basePrice = (float)$plan->price;
-            $durationDays = (int)$plan->duration_days;
-        } else {
-            // Legacy fallback
-            $durationDays = (int)$validated['duration_days'];
-            $plan = LicensePlan::where('is_active', true)->where('duration_days', $durationDays)->first();
-            $basePrice = $plan ? (float)$plan->price : match($durationDays) {
-                1 => 10000,
-                3 => 25000,
-                7 => 40000,
-                14 => 70000,
-                30 => 139000,
-                default => 0,
-            };
-        }
+        $plan = LicensePlan::where('is_active', true)->findOrFail($validated['plan_id']);
+        $basePrice = (float)$plan->price;
+        $durationDays = (int)$plan->duration_days;
 
         $finalPrice = $reseller->calculatePrice($basePrice);
         $totalCost = $finalPrice * $validated['quantity'];
@@ -101,7 +109,8 @@ class DashboardController extends Controller
             $license = LicenseKey::create([
                 'code' => LicenseKey::generateCode(),
                 'duration_days' => $durationDays,
-                'plan_id' => $plan?->id,
+                'plan_id' => $plan->id,
+                'app_id' => $plan->app_id, // Include app_id from plan
                 'price' => $finalPrice,
                 'reseller_id' => $reseller->id,
                 // created_by is for admin; set to null; track reseller creator explicitly
@@ -130,7 +139,7 @@ class DashboardController extends Controller
     {
         $reseller = Auth::guard('reseller')->user();
         $licenses = LicenseKey::where('reseller_id', $reseller->id)
-            ->with(['member'])
+            ->with(['member', 'app'])
             ->orderBy('created_at', 'desc')
             ->get();
 

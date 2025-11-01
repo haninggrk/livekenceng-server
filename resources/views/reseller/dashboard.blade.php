@@ -72,85 +72,68 @@
             </div>
         </div>
 
-        <!-- Generate License Section -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Generate License Keys</h2>
-            
-            <!-- Plans Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-                @foreach($plans as $plan)
-                <div class="bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 mb-2">{{ $plan->name ?? ($plan->duration_days . ' Day') }}</p>
-                    <p class="text-xs text-gray-500 line-through">Rp {{ number_format($plan->price, 0, ',', '.') }}</p>
-                    <p class="text-lg font-bold text-primary-600">Rp {{ number_format(((float)$plan->price) * (100 - (float)$reseller->discount_percentage) / 100, 0, ',', '.') }}</p>
-                </div>
-                @endforeach
-            </div>
-
-            <!-- Generate Form -->
-            <form id="generateForm" class="grid grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Plan</label>
-                    <select id="plan_id" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        @foreach($plans as $plan)
-                        <option value="{{ $plan->id }}">{{ $plan->name ?? ($plan->duration_days . ' Day') }} - Rp {{ number_format($plan->price, 0, ',', '.') }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
-                    <input type="number" id="quantity" min="1" max="100" value="1" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
-                        Generate
+        <!-- Apps Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px overflow-x-auto">
+                    @foreach($apps as $app)
+                    <button onclick="switchTab('{{ $app->identifier }}')" id="tab-{{ $app->identifier }}" class="tab-button px-6 py-4 text-sm font-medium border-b-2 {{ $loop->first ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap">
+                        {{ $app->display_name }}
                     </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- License Keys Table -->
-        <div class="bg-white rounded-2xl shadow-sm p-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Your License Keys</h2>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Used By</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="licensesTableBody" class="bg-white divide-y divide-gray-200">
-                        @foreach($licenses as $license)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{{ $license->code }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $license->duration_days }} days</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($license->price, 0, ',', '.') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($license->is_used)
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Used</span>
-                                @else
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $license->member?->email ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $license->created_at->format('Y-m-d H:i') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="copyLicense('{{ $license->code }}')" class="text-primary-600 hover:text-primary-900">Copy</button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                    @endforeach
+                </nav>
             </div>
+
+            @foreach($apps as $app)
+            <div id="content-{{ $app->identifier }}" class="tab-content p-6 {{ !$loop->first ? 'hidden' : '' }}">
+                <!-- Plans Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6" id="plansGrid-{{ $app->identifier }}">
+                    <p class="text-gray-600">Loading plans...</p>
+                </div>
+
+                <!-- Generate Form -->
+                <form id="generateForm-{{ $app->identifier }}" class="grid grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Plan</label>
+                        <select id="plan_id-{{ $app->identifier }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
+                        <input type="number" id="quantity-{{ $app->identifier }}" min="1" max="100" value="1" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    </div>
+
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                            Generate
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Licenses Table -->
+                <h3 class="text-xl font-bold text-gray-900 mb-4">License Keys</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Code</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Used By</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="licensesTableBody-{{ $app->identifier }}" class="bg-white divide-y divide-gray-200">
+                            <!-- Loading... -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
 </div>
@@ -158,6 +141,119 @@
 @push('scripts')
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const apps = @json($apps);
+
+    // Tab switching
+    function switchTab(appIdentifier) {
+        // Update button states
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('border-primary-500', 'text-primary-600');
+            btn.classList.add('border-transparent', 'text-gray-500');
+        });
+        document.getElementById('tab-' + appIdentifier).classList.remove('border-transparent', 'text-gray-500');
+        document.getElementById('tab-' + appIdentifier).classList.add('border-primary-500', 'text-primary-600');
+
+        // Update content visibility
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.getElementById('content-' + appIdentifier).classList.remove('hidden');
+
+        // Load data for this tab
+        loadDataForApp(appIdentifier);
+    }
+
+    // Load pricing and licenses for an app
+    function loadDataForApp(appIdentifier) {
+        const app = apps.find(a => a.identifier === appIdentifier);
+        if (!app) return;
+
+        // Load pricing
+        fetch('/reseller/pricing?app_id=' + app.id)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderPlans(app.identifier, data.pricing);
+                }
+            });
+
+        // Load licenses
+        loadLicensesForApp(appIdentifier);
+    }
+
+    // Render plans for an app
+    function renderPlans(appIdentifier, pricing) {
+        const grid = document.getElementById('plansGrid-' + appIdentifier);
+        const select = document.getElementById('plan_id-' + appIdentifier);
+        
+        grid.innerHTML = '';
+        pricing.forEach(plan => {
+            const planCard = document.createElement('div');
+            planCard.className = 'bg-gradient-to-br from-orange-50 to-primary-50 rounded-xl p-4 text-center';
+            planCard.innerHTML = `
+                <p class="text-sm text-gray-600 mb-2">${plan.name || plan.duration_days + ' Day'}</p>
+                <p class="text-xs text-gray-500 line-through">Rp ${plan.base_price.toLocaleString('id-ID')}</p>
+                <p class="text-lg font-bold text-primary-600">Rp ${plan.final_price.toLocaleString('id-ID')}</p>
+            `;
+            grid.appendChild(planCard);
+        });
+
+        select.innerHTML = '';
+        pricing.forEach(plan => {
+            const option = document.createElement('option');
+            option.value = plan.plan_id;
+            option.textContent = `${plan.name || plan.duration_days + ' Day'} - Rp ${plan.base_price.toLocaleString('id-ID')}`;
+            select.appendChild(option);
+        });
+    }
+
+    // Load licenses for an app
+    function loadLicensesForApp(appIdentifier) {
+        fetch('/reseller/licenses')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const app = apps.find(a => a.identifier === appIdentifier);
+                    const appLicenses = data.licenses.filter(license => {
+                        if (!license.app_id && appIdentifier === 'livekenceng') return true;
+                        return license.app && license.app.id === app.id;
+                    });
+                    renderLicenses(appIdentifier, appLicenses);
+                }
+            });
+    }
+
+    // Render licenses table
+    function renderLicenses(appIdentifier, licenses) {
+        const tbody = document.getElementById('licensesTableBody-' + appIdentifier);
+        tbody.innerHTML = '';
+        
+        if (licenses.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No licenses yet</td></tr>';
+            return;
+        }
+
+        licenses.forEach(license => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">${license.code}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.duration_days} days</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp ${parseFloat(license.price).toLocaleString('id-ID')}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${license.is_used 
+                        ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Used</span>'
+                        : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>'
+                    }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.member?.email || '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(license.created_at).toLocaleString('id-ID')}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="copyLicense('${license.code}')" class="text-primary-600 hover:text-primary-900">Copy</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 
     // Copy license key
     function copyLicense(code) {
@@ -166,40 +262,52 @@
         });
     }
 
-    // Generate license
-    document.getElementById('generateForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const data = {
-            plan_id: document.getElementById('plan_id').value,
-            quantity: document.getElementById('quantity').value,
-        };
-        
-        if (!confirm(`Generate ${data.quantity} license(s) for ${data.duration_days} day(s)?`)) {
-            return;
-        }
-        
-        fetch('/reseller/licenses/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert(`Success! ${data.licenses.length} license key(s) generated.\nTotal cost: Rp ${data.total_cost.toLocaleString('id-ID')}\nRemaining balance: Rp ${data.remaining_balance.toLocaleString('id-ID')}`);
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
+    // Set up form submissions for each app
+    document.addEventListener('DOMContentLoaded', function() {
+        apps.forEach(app => {
+            const form = document.getElementById('generateForm-' + app.identifier);
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const data = {
+                        plan_id: document.getElementById('plan_id-' + app.identifier).value,
+                        quantity: document.getElementById('quantity-' + app.identifier).value,
+                    };
+                    
+                    if (!confirm(`Generate ${data.quantity} license(s)?`)) {
+                        return;
+                    }
+                    
+                    fetch('/reseller/licenses/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`Success! ${data.licenses.length} license key(s) generated.\nTotal cost: Rp ${data.total_cost.toLocaleString('id-ID')}\nRemaining balance: Rp ${data.remaining_balance.toLocaleString('id-ID')}`);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        alert('Error generating license: ' + err.message);
+                    });
+                });
             }
-        })
-        .catch(err => {
-            alert('Error generating license: ' + err.message);
         });
+
+        // Load first tab's data
+        if (apps.length > 0) {
+            loadDataForApp(apps[0].identifier);
+        }
     });
 </script>
 @endpush

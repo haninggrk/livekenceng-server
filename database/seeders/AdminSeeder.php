@@ -14,6 +14,14 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if admin user already exists
+        $existingAdmin = User::where('email', 'admin@livekenceng.com')->first();
+        
+        if ($existingAdmin) {
+            $this->command->info('Admin user already exists. Skipping creation.');
+            return;
+        }
+
         User::create([
             'name' => 'Admin',
             'email' => 'admin@livekenceng.com',
