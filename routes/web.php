@@ -111,6 +111,22 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/apps/{app}', [AppController::class, 'update']);
     Route::delete('/apps/{app}', [AppController::class, 'destroy']);
     Route::post('/apps/{app}/toggle-active', [AppController::class, 'toggleActive']);
+    
+    // Niche and Product Set management routes (AJAX)
+    Route::get('/members/{member}/niches', [DashboardController::class, 'getMemberNiches']);
+    Route::post('/niches', [DashboardController::class, 'createNiche']);
+    Route::put('/niches/{niche}', [DashboardController::class, 'updateNiche']);
+    Route::delete('/niches/{niche}', [DashboardController::class, 'deleteNiche']);
+    Route::get('/niches/{niche}/export', [DashboardController::class, 'exportNicheToCSV']);
+    
+    Route::get('/members/{member}/product-sets', [DashboardController::class, 'getMemberProductSets']);
+    Route::post('/product-sets', [DashboardController::class, 'createProductSet']);
+    Route::put('/product-sets/{productSet}', [DashboardController::class, 'updateProductSet']);
+    Route::delete('/product-sets/{productSet}', [DashboardController::class, 'deleteProductSet']);
+    Route::post('/product-sets/{productSet}/items', [DashboardController::class, 'addProductSetItems']);
+    Route::delete('/product-sets/{productSet}/items/{item}', [DashboardController::class, 'deleteProductSetItem']);
+    Route::delete('/product-sets/{productSet}/items', [DashboardController::class, 'clearProductSetItems']);
+    Route::get('/product-sets/{productSet}/export', [DashboardController::class, 'exportProductSetToCSV']);
 });
 
 // Reseller authentication routes

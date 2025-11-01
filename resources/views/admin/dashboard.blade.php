@@ -91,6 +91,9 @@
                     <button onclick="switchTab('apps')" id="tab-apps" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Apps
                     </button>
+                    <button onclick="switchTab('niches')" id="tab-niches" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Niches & Product Sets
+                    </button>
                     <a href="{{ route('admin.updates.index') }}" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Software Updates
                     </a>
@@ -266,7 +269,142 @@
                 </div>
             </div>
 
+            <!-- Niches & Product Sets Tab -->
+            <div id="content-niches" class="tab-content p-6 hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Niches & Product Sets Management</h2>
+                    
+                    <!-- Member Selector -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Member</label>
+                        <div class="flex gap-3">
+                            <input type="text" id="nicheMemberSearch" placeholder="Search by email..." 
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            <button onclick="loadNichesForMember()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                Load
+                            </button>
+                        </div>
+                        <div id="selectedMemberInfo" class="mt-3 text-sm text-gray-600 hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Niches Section -->
+                <div id="nichesSection" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-gray-900">Niches</h3>
+                        <button onclick="openAddNicheModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            + Add Niche
+                        </button>
+                    </div>
+
+                    <div id="nichesList" class="space-y-4 mb-8">
+                        <!-- Niches will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="nichesEmptyState" class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Select a member to view niches</h3>
+                    <p class="mt-1 text-sm text-gray-500">Search for a member by email to get started.</p>
+                </div>
+            </div>
+
         </div>
+    </div>
+</div>
+
+<!-- Add/Edit Niche Modal -->
+<div id="nicheModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+        <h3 id="nicheModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Niche</h3>
+        <form id="nicheForm">
+            <input type="hidden" id="nicheId">
+            <input type="hidden" id="nicheMemberId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+                <input type="text" id="nicheName" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <textarea id="nicheDescription" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Save
+                </button>
+                <button type="button" onclick="closeNicheModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add/Edit Product Set Modal -->
+<div id="productSetModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+        <h3 id="productSetModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Product Set</h3>
+        <form id="productSetForm">
+            <input type="hidden" id="productSetId">
+            <input type="hidden" id="productSetMemberId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+                <input type="text" id="productSetName" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Niche</label>
+                <select id="productSetNicheId" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <option value="">No Niche</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <textarea id="productSetDescription" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Save
+                </button>
+                <button type="button" onclick="closeProductSetModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Items to Product Set Modal -->
+<div id="productSetItemsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h3 id="productSetItemsModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Items</h3>
+        <form id="productSetItemsForm">
+            <input type="hidden" id="itemsProductSetId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Product URLs (one per line)</label>
+                <textarea id="productUrls" rows="10" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm" placeholder="https://shopee.co.id/product/123/456&#10;https://shopee.co.id/product/789/012"></textarea>
+                <p class="text-xs text-gray-500 mt-1">Enter one URL per line. Max 100 items per product set.</p>
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Add Items
+                </button>
+                <button type="button" onclick="closeProductSetItemsModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -546,8 +684,502 @@
             loadAllLicensesGrouped();
         } else if (tab === 'members') {
             // Members are loaded on page load, so only reload if needed
+        } else if (tab === 'niches') {
+            // Reset niches tab
+            document.getElementById('nicheMemberSearch').value = '';
+            document.getElementById('selectedMemberInfo').classList.add('hidden');
+            document.getElementById('nichesSection').classList.add('hidden');
+            document.getElementById('nichesEmptyState').classList.remove('hidden');
         }
     }
+
+    // Niches & Product Sets Management
+    let currentMemberId = null;
+    let currentNiches = [];
+
+    function loadNichesForMember() {
+        const email = document.getElementById('nicheMemberSearch').value.trim();
+        if (!email) {
+            showToast('Please enter member email', 'error');
+            return;
+        }
+
+        // First, find member by email
+        fetch(`/admin/members?search=${encodeURIComponent(email)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.members.length > 0) {
+                    const member = data.members[0];
+                    if (member.email.toLowerCase() !== email.toLowerCase()) {
+                        showToast('Member not found', 'error');
+                        return;
+                    }
+                    currentMemberId = member.id;
+                    
+                    // Update UI
+                    document.getElementById('selectedMemberInfo').innerHTML = 
+                        `Selected: <strong>${member.email}</strong>`;
+                    document.getElementById('selectedMemberInfo').classList.remove('hidden');
+                    
+                    // Load niches
+                    fetch(`/admin/members/${member.id}/niches`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                currentNiches = data.niches;
+                                window.productSetsWithoutNiche = data.product_sets_without_niche || [];
+                                renderNiches();
+                                document.getElementById('nichesSection').classList.remove('hidden');
+                                document.getElementById('nichesEmptyState').classList.add('hidden');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading niches:', error);
+                            showToast('Error loading niches', 'error');
+                        });
+                } else {
+                    showToast('Member not found', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error searching member:', error);
+                showToast('Error searching member', 'error');
+            });
+    }
+
+    function renderNiches() {
+        const container = document.getElementById('nichesList');
+        container.innerHTML = '';
+
+        let hasContent = currentNiches.length > 0;
+
+        // Render product sets without niche first
+        if (window.productSetsWithoutNiche && window.productSetsWithoutNiche.length > 0) {
+            hasContent = true;
+            const noNicheCard = document.createElement('div');
+            noNicheCard.className = 'bg-white rounded-lg border border-gray-200 p-6 mb-4';
+            
+            const productSetsHtml = window.productSetsWithoutNiche.map(ps => `
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">${ps.name || 'Unnamed Set'}</h4>
+                            ${ps.description ? `<p class="text-sm text-gray-600 mt-1">${ps.description}</p>` : ''}
+                            <p class="text-xs text-gray-500 mt-2">${ps.items ? ps.items.length : 0} items</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openAddItemsModal(${ps.id})" class="text-primary-600 hover:text-primary-900 text-sm font-medium">+ Items</button>
+                            <button onclick="editProductSet(${ps.id})" class="text-primary-600 hover:text-primary-900 text-sm font-medium">Edit</button>
+                            <button onclick="deleteProductSet(${ps.id})" class="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
+                            <a href="/admin/product-sets/${ps.id}/export" class="text-green-600 hover:text-green-900 text-sm font-medium">Export CSV</a>
+                        </div>
+                    </div>
+                    ${ps.items && ps.items.length > 0 ? `
+                        <div class="mt-3 max-h-48 overflow-y-auto">
+                            <table class="min-w-full text-xs">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">URL</th>
+                                        <th class="px-3 py-2 text-left">Shop ID</th>
+                                        <th class="px-3 py-2 text-left">Item ID</th>
+                                        <th class="px-3 py-2 text-left">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${ps.items.map(item => `
+                                        <tr class="border-t">
+                                            <td class="px-3 py-2 font-mono text-xs">${item.url.substring(0, 50)}...</td>
+                                            <td class="px-3 py-2">${item.shop_id}</td>
+                                            <td class="px-3 py-2">${item.item_id}</td>
+                                            <td class="px-3 py-2">
+                                                <button onclick="deleteProductSetItem(${ps.id}, ${item.id})" class="text-red-600 hover:text-red-900">Remove</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : '<p class="text-sm text-gray-500 mt-2">No items</p>'}
+                </div>
+            `).join('');
+
+            noNicheCard.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">No Niche</h3>
+                        <p class="text-xs text-gray-500 mt-2">Product sets without niche assignment</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openAddProductSetModal(null)" class="text-primary-600 hover:text-primary-900 text-sm font-medium">+ Product Set</button>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    ${productSetsHtml || '<p class="text-sm text-gray-500">No product sets</p>'}
+                </div>
+            `;
+            container.appendChild(noNicheCard);
+        }
+
+        if (!hasContent) {
+            container.innerHTML = '<p class="text-gray-500 text-center py-8">No niches found. Create one to get started.</p>';
+            return;
+        }
+
+        currentNiches.forEach(niche => {
+            const nicheCard = document.createElement('div');
+            nicheCard.className = 'bg-white rounded-lg border border-gray-200 p-6';
+            
+            const productSetsHtml = niche.product_sets && niche.product_sets.length > 0
+                ? niche.product_sets.map(ps => `
+                    <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-semibold text-gray-900">${ps.name || 'Unnamed Set'}</h4>
+                                ${ps.description ? `<p class="text-sm text-gray-600 mt-1">${ps.description}</p>` : ''}
+                                <p class="text-xs text-gray-500 mt-2">${ps.items ? ps.items.length : 0} items</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openAddItemsModal(${ps.id})" class="text-primary-600 hover:text-primary-900 text-sm font-medium">+ Items</button>
+                                <button onclick="editProductSet(${ps.id})" class="text-primary-600 hover:text-primary-900 text-sm font-medium">Edit</button>
+                                <button onclick="deleteProductSet(${ps.id})" class="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
+                                <a href="/admin/product-sets/${ps.id}/export" class="text-green-600 hover:text-green-900 text-sm font-medium">Export CSV</a>
+                            </div>
+                        </div>
+                        ${ps.items && ps.items.length > 0 ? `
+                            <div class="mt-3 max-h-48 overflow-y-auto">
+                                <table class="min-w-full text-xs">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left">URL</th>
+                                            <th class="px-3 py-2 text-left">Shop ID</th>
+                                            <th class="px-3 py-2 text-left">Item ID</th>
+                                            <th class="px-3 py-2 text-left">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${ps.items.map(item => `
+                                            <tr class="border-t">
+                                                <td class="px-3 py-2 font-mono text-xs">${item.url.substring(0, 50)}...</td>
+                                                <td class="px-3 py-2">${item.shop_id}</td>
+                                                <td class="px-3 py-2">${item.item_id}</td>
+                                                <td class="px-3 py-2">
+                                                    <button onclick="deleteProductSetItem(${ps.id}, ${item.id})" class="text-red-600 hover:text-red-900">Remove</button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : '<p class="text-sm text-gray-500 mt-2">No items</p>'}
+                    </div>
+                `).join('')
+                : '<p class="text-sm text-gray-500 mt-4">No product sets</p>';
+
+            nicheCard.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">${niche.name}</h3>
+                        ${niche.description ? `<p class="text-sm text-gray-600 mt-1">${niche.description}</p>` : ''}
+                        <p class="text-xs text-gray-500 mt-2">${niche.product_sets ? niche.product_sets.length : 0} product sets</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openAddProductSetModal(${niche.id})" class="text-primary-600 hover:text-primary-900 text-sm font-medium">+ Product Set</button>
+                        <button onclick="editNiche(${niche.id})" class="text-primary-600 hover:text-primary-900 text-sm font-medium">Edit</button>
+                        <button onclick="deleteNiche(${niche.id})" class="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
+                        <a href="/admin/niches/${niche.id}/export" class="text-green-600 hover:text-green-900 text-sm font-medium">Export CSV</a>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Product Sets:</h4>
+                    ${productSetsHtml}
+                </div>
+            `;
+            container.appendChild(nicheCard);
+        });
+    }
+
+    function openAddNicheModal() {
+        if (!currentMemberId) {
+            showToast('Please select a member first', 'error');
+            return;
+        }
+        document.getElementById('nicheModalTitle').textContent = 'Add Niche';
+        document.getElementById('nicheForm').reset();
+        document.getElementById('nicheId').value = '';
+        document.getElementById('nicheMemberId').value = currentMemberId;
+        document.getElementById('nicheModal').classList.remove('hidden');
+        document.getElementById('nicheModal').classList.add('flex');
+    }
+
+    function closeNicheModal() {
+        document.getElementById('nicheModal').classList.add('hidden');
+        document.getElementById('nicheModal').classList.remove('flex');
+    }
+
+    function editNiche(id) {
+        const niche = currentNiches.find(n => n.id == id);
+        if (!niche) return;
+
+        document.getElementById('nicheModalTitle').textContent = 'Edit Niche';
+        document.getElementById('nicheId').value = niche.id;
+        document.getElementById('nicheMemberId').value = niche.member_id;
+        document.getElementById('nicheName').value = niche.name;
+        document.getElementById('nicheDescription').value = niche.description || '';
+        document.getElementById('nicheModal').classList.remove('hidden');
+        document.getElementById('nicheModal').classList.add('flex');
+    }
+
+    function deleteNiche(id) {
+        if (!confirm('Are you sure you want to delete this niche? All product sets in this niche will be removed from the niche.')) return;
+
+        fetch(`/admin/niches/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadNichesForMember();
+            } else {
+                showToast(data.message, 'error');
+            }
+        });
+    }
+
+    function openAddProductSetModal(nicheId = null) {
+        if (!currentMemberId) {
+            showToast('Please select a member first', 'error');
+            return;
+        }
+        document.getElementById('productSetModalTitle').textContent = 'Add Product Set';
+        document.getElementById('productSetForm').reset();
+        document.getElementById('productSetId').value = '';
+        document.getElementById('productSetMemberId').value = currentMemberId;
+        
+        // Load niches for dropdown
+        const nicheSelect = document.getElementById('productSetNicheId');
+        nicheSelect.innerHTML = '<option value="">No Niche</option>';
+        currentNiches.forEach(niche => {
+            const option = document.createElement('option');
+            option.value = niche.id;
+            option.textContent = niche.name;
+            if (nicheId && niche.id == nicheId) {
+                option.selected = true;
+            }
+            nicheSelect.appendChild(option);
+        });
+        
+        document.getElementById('productSetModal').classList.remove('hidden');
+        document.getElementById('productSetModal').classList.add('flex');
+    }
+
+    function closeProductSetModal() {
+        document.getElementById('productSetModal').classList.add('hidden');
+        document.getElementById('productSetModal').classList.remove('flex');
+    }
+
+    function editProductSet(id) {
+        // Find product set
+        let productSet = null;
+        
+        // Check in niches
+        for (const niche of currentNiches) {
+            if (niche.product_sets) {
+                productSet = niche.product_sets.find(ps => ps.id == id);
+                if (productSet) break;
+            }
+        }
+        
+        // Check in product sets without niche
+        if (!productSet && window.productSetsWithoutNiche) {
+            productSet = window.productSetsWithoutNiche.find(ps => ps.id == id);
+        }
+        
+        if (!productSet) return;
+
+        document.getElementById('productSetModalTitle').textContent = 'Edit Product Set';
+        document.getElementById('productSetId').value = productSet.id;
+        document.getElementById('productSetMemberId').value = productSet.member_id;
+        document.getElementById('productSetName').value = productSet.name;
+        document.getElementById('productSetDescription').value = productSet.description || '';
+        
+        // Load niches for dropdown
+        const nicheSelect = document.getElementById('productSetNicheId');
+        nicheSelect.innerHTML = '<option value="">No Niche</option>';
+        currentNiches.forEach(niche => {
+            const option = document.createElement('option');
+            option.value = niche.id;
+            option.textContent = niche.name;
+            if (productSet.niche_id && niche.id == productSet.niche_id) {
+                option.selected = true;
+            }
+            nicheSelect.appendChild(option);
+        });
+        
+        document.getElementById('productSetModal').classList.remove('hidden');
+        document.getElementById('productSetModal').classList.add('flex');
+    }
+
+    function deleteProductSet(id) {
+        if (!confirm('Are you sure you want to delete this product set? All items will be deleted.')) return;
+
+        fetch(`/admin/product-sets/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadNichesForMember();
+            } else {
+                showToast(data.message, 'error');
+            }
+        });
+    }
+
+    function openAddItemsModal(productSetId) {
+        document.getElementById('productSetItemsModalTitle').textContent = 'Add Items to Product Set';
+        document.getElementById('itemsProductSetId').value = productSetId;
+        document.getElementById('productUrls').value = '';
+        document.getElementById('productSetItemsModal').classList.remove('hidden');
+        document.getElementById('productSetItemsModal').classList.add('flex');
+    }
+
+    function closeProductSetItemsModal() {
+        document.getElementById('productSetItemsModal').classList.add('hidden');
+        document.getElementById('productSetItemsModal').classList.remove('flex');
+    }
+
+    function deleteProductSetItem(productSetId, itemId) {
+        if (!confirm('Are you sure you want to remove this item?')) return;
+
+        fetch(`/admin/product-sets/${productSetId}/items/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadNichesForMember();
+            } else {
+                showToast(data.message, 'error');
+            }
+        });
+    }
+
+    // Form submissions
+    document.getElementById('nicheForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('nicheId').value;
+        const url = id ? `/admin/niches/${id}` : '/admin/niches';
+        const method = id ? 'PUT' : 'POST';
+        const data = {
+            member_id: document.getElementById('nicheMemberId').value,
+            name: document.getElementById('nicheName').value,
+            description: document.getElementById('nicheDescription').value,
+        };
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeNicheModal();
+                loadNichesForMember();
+            } else {
+                showToast(data.message || 'Error saving niche', 'error');
+            }
+        });
+    });
+
+    document.getElementById('productSetForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('productSetId').value;
+        const url = id ? `/admin/product-sets/${id}` : '/admin/product-sets';
+        const method = id ? 'PUT' : 'POST';
+        const data = {
+            member_id: document.getElementById('productSetMemberId').value,
+            niche_id: document.getElementById('productSetNicheId').value || null,
+            name: document.getElementById('productSetName').value,
+            description: document.getElementById('productSetDescription').value,
+        };
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeProductSetModal();
+                loadNichesForMember();
+            } else {
+                showToast(data.message || 'Error saving product set', 'error');
+            }
+        });
+    });
+
+    document.getElementById('productSetItemsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const productSetId = document.getElementById('itemsProductSetId').value;
+        const urls = document.getElementById('productUrls').value
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && line.includes('shopee.co.id/product/'));
+        
+        if (urls.length === 0) {
+            showToast('Please enter at least one valid Shopee product URL', 'error');
+            return;
+        }
+
+        const items = urls.map(url => ({ url }));
+        
+        fetch(`/admin/product-sets/${productSetId}/items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ items })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Items processed: ${data.added} added, ${data.skipped} skipped`, 'success');
+                closeProductSetItemsModal();
+                loadNichesForMember();
+            } else {
+                showToast(data.message || 'Error adding items', 'error');
+            }
+        });
+    });
 
     // Member Management
     let allMembers = []; // Store all members for pagination

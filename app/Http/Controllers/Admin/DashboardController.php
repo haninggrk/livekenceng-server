@@ -7,10 +7,14 @@ use App\Models\Member;
 use App\Models\LicenseKey;
 use App\Models\Reseller;
 use App\Models\LicensePlan;
+use App\Models\Niche;
+use App\Models\ProductSet;
+use App\Models\ProductSetItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Response;
 
 class DashboardController extends Controller
 {
@@ -498,5 +502,390 @@ class DashboardController extends Controller
             'success' => true,
             'message' => 'Plan deleted successfully',
         ]);
+    }
+
+    /**
+     * Get all niches for a member
+     */
+    public function getMemberNiches(Member $member)
+    {
+        $niches = $member->niches()->with(['productSets.items'])->orderBy('created_at', 'desc')->get();
+        
+        // Also get product sets without niche
+        $productSetsWithoutNiche = $member->productSets()
+            ->whereNull('niche_id')
+            ->with('items')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'niches' => $niches,
+            'product_sets_without_niche' => $productSetsWithoutNiche
+        ]);
+    }
+
+    /**
+     * Create a new niche
+     */
+    public function createNiche(Request $request)
+    {
+        $validated = $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $niche = Niche::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Niche created successfully',
+            'niche' => $niche->load('productSets')
+        ]);
+    }
+
+    /**
+     * Update a niche
+     */
+    public function updateNiche(Request $request, Niche $niche)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $niche->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Niche updated successfully',
+            'niche' => $niche->fresh(['productSets.items'])
+        ]);
+    }
+
+    /**
+     * Delete a niche
+     */
+    public function deleteNiche(Niche $niche)
+    {
+        $niche->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Niche deleted successfully'
+        ]);
+    }
+
+    /**
+     * Export niche to CSV
+     */
+    public function exportNicheToCSV(Niche $niche)
+    {
+        $niche->load(['productSets.items', 'member']);
+        
+        $filename = 'niche_' . $niche->id . '_' . Str::slug($niche->name) . '_' . now()->format('Y-m-d') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($niche) {
+            $file = fopen('php://output', 'w');
+            
+            // Header row
+            fputcsv($file, ['Niche: ' . $niche->name]);
+            fputcsv($file, ['Description: ' . ($niche->description ?? 'N/A')]);
+            fputcsv($file, ['Member: ' . $niche->member->email]);
+            fputcsv($file, ['Created: ' . $niche->created_at->format('Y-m-d H:i:s')]);
+            fputcsv($file, []); // Empty row
+            
+            foreach ($niche->productSets as $productSet) {
+                fputcsv($file, ['Product Set: ' . $productSet->name]);
+                fputcsv($file, ['Product Set Description: ' . ($productSet->description ?? 'N/A')]);
+                fputcsv($file, ['Items Count: ' . $productSet->items->count()]);
+                fputcsv($file, []); // Empty row
+                
+                // Items header
+                fputcsv($file, ['Item URL', 'Shop ID', 'Item ID']);
+                
+                foreach ($productSet->items as $item) {
+                    fputcsv($file, [
+                        $item->url,
+                        $item->shop_id,
+                        $item->item_id
+                    ]);
+                }
+                
+                fputcsv($file, []); // Empty row between product sets
+            }
+            
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Get all product sets for a member
+     */
+    public function getMemberProductSets(Member $member)
+    {
+        $productSets = $member->productSets()->with(['niche', 'items'])->orderBy('created_at', 'desc')->get();
+        
+        return response()->json([
+            'success' => true,
+            'product_sets' => $productSets
+        ]);
+    }
+
+    /**
+     * Create a new product set
+     */
+    public function createProductSet(Request $request)
+    {
+        $validated = $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'niche_id' => 'nullable|exists:niches,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        // Verify niche belongs to member if provided
+        if ($validated['niche_id']) {
+            $niche = Niche::find($validated['niche_id']);
+            if (!$niche || $niche->member_id != $validated['member_id']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Niche does not belong to this member'
+                ], 400);
+            }
+        }
+
+        $productSet = ProductSet::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product set created successfully',
+            'product_set' => $productSet->load(['niche', 'items'])
+        ]);
+    }
+
+    /**
+     * Update a product set
+     */
+    public function updateProductSet(Request $request, ProductSet $productSet)
+    {
+        $validated = $request->validate([
+            'niche_id' => 'nullable|exists:niches,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        // Verify niche belongs to member if provided
+        if ($validated['niche_id']) {
+            $niche = Niche::find($validated['niche_id']);
+            if (!$niche || $niche->member_id != $productSet->member_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Niche does not belong to this member'
+                ], 400);
+            }
+        }
+
+        $productSet->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product set updated successfully',
+            'product_set' => $productSet->fresh(['niche', 'items'])
+        ]);
+    }
+
+    /**
+     * Delete a product set
+     */
+    public function deleteProductSet(ProductSet $productSet)
+    {
+        $productSet->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Product set deleted successfully'
+        ]);
+    }
+
+    /**
+     * Add items to a product set
+     */
+    public function addProductSetItems(Request $request, ProductSet $productSet)
+    {
+        $validated = $request->validate([
+            'items' => 'required|array|max:100',
+            'items.*' => 'required|array',
+            'items.*.url' => 'required|string',
+            'items.*.shop_id' => 'sometimes|integer',
+            'items.*.item_id' => 'sometimes|integer',
+        ]);
+
+        $currentItemCount = $productSet->items()->count();
+        $newItemsCount = count($validated['items']);
+
+        if ($currentItemCount + $newItemsCount > 100) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product set cannot have more than 100 items. Current: ' . $currentItemCount . ', Trying to add: ' . $newItemsCount
+            ], 400);
+        }
+
+        $addedItems = [];
+        $skippedItems = [];
+
+        foreach ($validated['items'] as $itemData) {
+            $url = $itemData['url'];
+            
+            // Check for duplicate URL
+            $existingItem = $productSet->items()->where('url', $url)->first();
+            
+            if ($existingItem) {
+                $skippedItems[] = [
+                    'url' => $url,
+                    'reason' => 'Duplicate URL'
+                ];
+                continue;
+            }
+
+            // Parse URL if shop_id/item_id not provided
+            $shopId = $itemData['shop_id'] ?? null;
+            $itemId = $itemData['item_id'] ?? null;
+            
+            if (!$shopId || !$itemId) {
+                $parsed = $this->parseProductUrl($url);
+                if (!$parsed) {
+                    $skippedItems[] = [
+                        'url' => $url,
+                        'reason' => 'Invalid URL format'
+                    ];
+                    continue;
+                }
+                $shopId = $parsed['shop_id'];
+                $itemId = $parsed['item_id'];
+            }
+
+            try {
+                $item = ProductSetItem::create([
+                    'product_set_id' => $productSet->id,
+                    'url' => $url,
+                    'shop_id' => $shopId,
+                    'item_id' => $itemId,
+                ]);
+                $addedItems[] = $item;
+            } catch (\Exception $e) {
+                $skippedItems[] = [
+                    'url' => $url,
+                    'reason' => 'Error: ' . $e->getMessage()
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Items processed',
+            'added' => count($addedItems),
+            'skipped' => count($skippedItems),
+            'added_items' => $addedItems,
+            'skipped_items' => $skippedItems,
+        ]);
+    }
+
+    /**
+     * Parse product URL to extract shop_id and item_id
+     */
+    private function parseProductUrl(string $url): ?array
+    {
+        if (preg_match('/\/product\/(\d+)\/(\d+)/', $url, $matches)) {
+            return [
+                'shop_id' => (int)$matches[1],
+                'item_id' => (int)$matches[2],
+            ];
+        }
+        return null;
+    }
+
+    /**
+     * Delete a product set item
+     */
+    public function deleteProductSetItem(ProductSet $productSet, ProductSetItem $item)
+    {
+        if ($item->product_set_id !== $productSet->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item does not belong to this product set'
+            ], 400);
+        }
+
+        $item->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Item deleted successfully'
+        ]);
+    }
+
+    /**
+     * Clear all items from a product set
+     */
+    public function clearProductSetItems(ProductSet $productSet)
+    {
+        $productSet->items()->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'All items cleared successfully'
+        ]);
+    }
+
+    /**
+     * Export product set to CSV
+     */
+    public function exportProductSetToCSV(ProductSet $productSet)
+    {
+        $productSet->load(['items', 'niche', 'member']);
+        
+        $filename = 'product_set_' . $productSet->id . '_' . Str::slug($productSet->name) . '_' . now()->format('Y-m-d') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($productSet) {
+            $file = fopen('php://output', 'w');
+            
+            // Header rows
+            fputcsv($file, ['Product Set: ' . $productSet->name]);
+            fputcsv($file, ['Description: ' . ($productSet->description ?? 'N/A')]);
+            fputcsv($file, ['Niche: ' . ($productSet->niche->name ?? 'No Niche')]);
+            fputcsv($file, ['Member: ' . $productSet->member->email]);
+            fputcsv($file, ['Items Count: ' . $productSet->items->count()]);
+            fputcsv($file, ['Created: ' . $productSet->created_at->format('Y-m-d H:i:s')]);
+            fputcsv($file, []); // Empty row
+            
+            // Items header
+            fputcsv($file, ['URL', 'Shop ID', 'Item ID']);
+            
+            foreach ($productSet->items as $item) {
+                fputcsv($file, [
+                    $item->url,
+                    $item->shop_id,
+                    $item->item_id
+                ]);
+            }
+            
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
     }
 }
