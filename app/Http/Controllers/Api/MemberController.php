@@ -298,32 +298,44 @@ class MemberController extends Controller
         // Check and update expired status
         $member->checkAndUpdateExpiredStatus();
 
-        // Update machine_id in livekenceng subscription for backward compatibility
-        $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
-        if ($defaultApp) {
-            $subscription = $member->getSubscriptionForApp($defaultApp->id);
-            if ($subscription) {
-                $subscription->machine_id = $request->machine_id;
-                $subscription->save();
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Machine ID updated successfully',
-                    'email' => $member->email,
-                    'machine_id' => $subscription->machine_id
-                ]);
-            }
+        // Determine which app to use
+        $appIdentifier = $request->input('app_identifier');
+        
+        if (!$appIdentifier) {
+            // Default to legacy livekenceng app for backward compatibility
+            $appIdentifier = 'livekenceng';
         }
 
-        // Fallback to old member table
-        $member->machine_id = $request->machine_id;
-        $member->save();
+        // Find the app by identifier
+        $app = \App\Models\App::where('identifier', $appIdentifier)->first();
 
+        if (!$app) {
+            return response()->json([
+                'success' => false,
+                'message' => 'App not found'
+            ], 404);
+        }
+
+        // Get or create subscription for this app
+        $subscription = $member->getSubscriptionForApp($app->id);
+        
+        if (!$subscription) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active subscription found for this app'
+            ], 404);
+        }
+
+        // Update machine_id for this app's subscription
+        $subscription->machine_id = $request->machine_id;
+        $subscription->save();
+        
         return response()->json([
             'success' => true,
             'message' => 'Machine ID updated successfully',
             'email' => $member->email,
-            'machine_id' => $member->machine_id
+            'machine_id' => $subscription->machine_id,
+            'app_identifier' => $app->identifier
         ]);
     }
 
