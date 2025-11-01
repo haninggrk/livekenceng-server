@@ -204,12 +204,27 @@ class MemberController extends Controller
             return response()->json(['success' => false, 'message' => 'Current password is incorrect'], 401);
         }
 
-        // Enforce same device
-        if ($member->machine_id && $member->machine_id !== $request->machine_id) {
-            return response()->json(['success' => false, 'message' => 'Machine ID mismatch'], 401);
-        }
-        if (!$member->machine_id) {
-            $member->machine_id = $request->machine_id;
+        // Enforce same device - check livekenceng subscription for backward compatibility
+        $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
+        if ($defaultApp) {
+            $subscription = $member->getSubscriptionForApp($defaultApp->id);
+            if ($subscription) {
+                if ($subscription->machine_id && $subscription->machine_id !== $request->machine_id) {
+                    return response()->json(['success' => false, 'message' => 'Machine ID mismatch'], 401);
+                }
+                if (!$subscription->machine_id) {
+                    $subscription->machine_id = $request->machine_id;
+                    $subscription->save();
+                }
+            }
+        } else {
+            // Fallback to old member table
+            if ($member->machine_id && $member->machine_id !== $request->machine_id) {
+                return response()->json(['success' => false, 'message' => 'Machine ID mismatch'], 401);
+            }
+            if (!$member->machine_id) {
+                $member->machine_id = $request->machine_id;
+            }
         }
 
         $member->password = Hash::make($request->new_password);
@@ -238,6 +253,20 @@ class MemberController extends Controller
         // Check and update expired status
         $member->checkAndUpdateExpiredStatus();
 
+        // Get machine_id from livekenceng subscription for backward compatibility
+        $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
+        if ($defaultApp) {
+            $subscription = $member->getSubscriptionForApp($defaultApp->id);
+            if ($subscription) {
+                return response()->json([
+                    'success' => true,
+                    'email' => $member->email,
+                    'machine_id' => $subscription->machine_id ?? $member->machine_id
+                ]);
+            }
+        }
+
+        // Fallback to old member table
         return response()->json([
             'success' => true,
             'email' => $member->email,
@@ -269,6 +298,24 @@ class MemberController extends Controller
         // Check and update expired status
         $member->checkAndUpdateExpiredStatus();
 
+        // Update machine_id in livekenceng subscription for backward compatibility
+        $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
+        if ($defaultApp) {
+            $subscription = $member->getSubscriptionForApp($defaultApp->id);
+            if ($subscription) {
+                $subscription->machine_id = $request->machine_id;
+                $subscription->save();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Machine ID updated successfully',
+                    'email' => $member->email,
+                    'machine_id' => $subscription->machine_id
+                ]);
+            }
+        }
+
+        // Fallback to old member table
         $member->machine_id = $request->machine_id;
         $member->save();
 
@@ -485,14 +532,27 @@ class MemberController extends Controller
         // Check and update expired status
         $member->checkAndUpdateExpiredStatus();
 
+        // Get machine_id and expiry_date from livekenceng subscription for backward compatibility
+        $machineId = $member->machine_id;
+        $expiryDate = $member->expiry_date;
+        
+        $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
+        if ($defaultApp) {
+            $subscription = $member->getSubscriptionForApp($defaultApp->id);
+            if ($subscription) {
+                $machineId = $subscription->machine_id ?? $member->machine_id;
+                $expiryDate = $subscription->expiry_date;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $member->id,
                 'email' => $member->email,
                 'telegram_username' => $member->telegram_username,
-                'expiry_date' => $member->expiry_date?->toIso8601String(),
-                'machine_id' => $member->machine_id,
+                'expiry_date' => $expiryDate?->toIso8601String(),
+                'machine_id' => $machineId,
                 'created_at' => $member->created_at,
                 'updated_at' => $member->updated_at,
             ]

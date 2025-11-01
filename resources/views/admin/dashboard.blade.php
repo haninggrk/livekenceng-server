@@ -108,7 +108,7 @@
 
                 <!-- Search and Filter Controls -->
                 <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <!-- Search -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
@@ -124,6 +124,18 @@
                                 <option value="created_at_asc">Oldest First</option>
                                 <option value="email_asc">Email (A-Z)</option>
                                 <option value="email_desc">Email (Z-A)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Per Page -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Per Page</label>
+                            <select id="memberPerPage" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
                             </select>
                         </div>
                         
@@ -150,6 +162,11 @@
                         <!-- Members will be loaded dynamically via JavaScript -->
                     </tbody>
                     </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div id="membersPagination" class="mt-4 flex items-center justify-between">
+                    <!-- Pagination info and controls will be rendered here -->
                 </div>
             </div>
 
@@ -533,6 +550,9 @@
     }
 
     // Member Management
+    let allMembers = []; // Store all members for pagination
+    let currentMemberPage = 1;
+
     function loadMembers() {
         const search = document.getElementById('memberSearch').value;
         const sortBy = document.getElementById('memberSortBy').value;
@@ -545,7 +565,9 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    renderMembersTable(data.members);
+                    allMembers = data.members;
+                    currentMemberPage = 1;
+                    renderMembersTable();
                 }
             })
             .catch(error => {
@@ -553,11 +575,16 @@
             });
     }
 
-    function renderMembersTable(members) {
+    function renderMembersTable() {
         const tbody = document.getElementById('membersTableBody');
         tbody.innerHTML = '';
         
-        members.forEach(member => {
+        const perPage = parseInt(document.getElementById('memberPerPage').value) || 10;
+        const start = (currentMemberPage - 1) * perPage;
+        const end = start + perPage;
+        const displayedMembers = allMembers.slice(start, end);
+        
+        displayedMembers.forEach(member => {
             const row = document.createElement('tr');
             
             // Count active subscriptions
@@ -582,11 +609,57 @@
             `;
             tbody.appendChild(row);
         });
+        
+        renderMemberPagination();
+    }
+
+    function renderMemberPagination() {
+        const pagination = document.getElementById('membersPagination');
+        const perPage = parseInt(document.getElementById('memberPerPage').value) || 10;
+        const totalPages = Math.ceil(allMembers.length / perPage);
+        
+        if (allMembers.length === 0) {
+            pagination.innerHTML = '';
+            return;
+        }
+        
+        const start = (currentMemberPage - 1) * perPage + 1;
+        const end = Math.min(currentMemberPage * perPage, allMembers.length);
+        
+        pagination.innerHTML = `
+            <div class="text-sm text-gray-700">
+                Showing ${start} to ${end} of ${allMembers.length} members
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="changeMemberPage(${currentMemberPage - 1})" 
+                        ${currentMemberPage === 1 ? 'disabled' : ''}
+                        class="px-3 py-1 border border-gray-300 rounded-lg ${currentMemberPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}">
+                    ← Previous
+                </button>
+                <span class="text-sm text-gray-700">Page ${currentMemberPage} of ${totalPages}</span>
+                <button onclick="changeMemberPage(${currentMemberPage + 1})" 
+                        ${currentMemberPage === totalPages ? 'disabled' : ''}
+                        class="px-3 py-1 border border-gray-300 rounded-lg ${currentMemberPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}">
+                    Next →
+                </button>
+            </div>
+        `;
+    }
+
+    function changeMemberPage(page) {
+        const perPage = parseInt(document.getElementById('memberPerPage').value) || 10;
+        const totalPages = Math.ceil(allMembers.length / perPage);
+        
+        if (page >= 1 && page <= totalPages) {
+            currentMemberPage = page;
+            renderMembersTable();
+        }
     }
 
     function clearMemberFilters() {
         document.getElementById('memberSearch').value = '';
         document.getElementById('memberSortBy').value = 'created_at_desc';
+        document.getElementById('memberPerPage').value = '10';
         loadMembers();
     }
 
@@ -1503,6 +1576,10 @@
         // Add event listeners for member filters
         document.getElementById('memberSearch').addEventListener('input', debounce(loadMembers, 300));
         document.getElementById('memberSortBy').addEventListener('change', loadMembers);
+        document.getElementById('memberPerPage').addEventListener('change', function() {
+            currentMemberPage = 1;
+            renderMembersTable();
+        });
         
         // Add event listener for app change in license modal
         const licenseAppSelect = document.getElementById('licenseAppId');
