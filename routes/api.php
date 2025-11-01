@@ -77,6 +77,7 @@ Route::prefix('shopee')->group(function () {
 // Shopee Live Stream routes
 Route::prefix('shopee-live')->group(function () {
     Route::post('/session-ids', [ShopeeLiveController::class, 'getSessionIds']);
+    Route::post('/active-session', [ShopeeLiveController::class, 'getActiveSession']);
     Route::post('/replace-products', [ShopeeLiveController::class, 'replaceProducts']);
     Route::post('/clear-products', [ShopeeLiveController::class, 'clearProducts']);
 });

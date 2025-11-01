@@ -532,6 +532,34 @@ POST /api/shopee-live/session-ids
 }
 ```
 
+### Get Active Session
+```
+POST /api/shopee-live/active-session
+```
+**Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "shopee_account_id": 1
+}
+```
+**Response (with active session):**
+```json
+{
+  "success": true,
+  "session_id": "171945454"
+}
+```
+**Response (no active session):**
+```json
+{
+  "success": true,
+  "session_id": null
+}
+```
+**Note:** Returns only the first session ID where `status = 1` (active/live). Returns `null` if no active session found.
+
 ### Replace Products
 ```
 POST /api/shopee-live/replace-products

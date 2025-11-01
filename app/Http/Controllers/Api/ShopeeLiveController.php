@@ -139,6 +139,50 @@ class ShopeeLiveController extends Controller
     }
 
     /**
+     * Get active live stream session ID (status = 1)
+     */
+    public function getActiveSession(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+            'shopee_account_id' => 'required|exists:shopee_accounts,id',
+        ]);
+
+        $member = Member::where('email', $request->email)->first();
+
+        if (!$member || !Hash::check($request->password, $member->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        $shopeeAccount = ShopeeAccount::find($request->shopee_account_id);
+
+        if (!$shopeeAccount || $shopeeAccount->member_id !== $member->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shopee account not found or does not belong to you'
+            ], 404);
+        }
+
+        if (!$shopeeAccount->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shopee account is inactive'
+            ], 400);
+        }
+
+        $activeSessionId = $this->shopeeService->getActiveSessionId($shopeeAccount->cookie);
+
+        return response()->json([
+            'success' => true,
+            'session_id' => $activeSessionId
+        ]);
+    }
+
+    /**
      * Clear all products from live stream (pass empty array)
      */
     public function clearProducts(Request $request)
