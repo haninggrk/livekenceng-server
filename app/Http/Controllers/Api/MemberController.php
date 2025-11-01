@@ -11,6 +11,7 @@ class MemberController extends Controller
 {
     /**
      * Member login with email, password, and machine ID
+     * Supports both multi-app (with app_identifier) and legacy single-app systems
      */
     public function login(Request $request)
     {
@@ -32,9 +33,6 @@ class MemberController extends Controller
             ], 401);
         }
 
-        // Check and update expired status
-        $member->checkAndUpdateExpiredStatus();
-
         // Verify password
         if (!Hash::check($request->password, $member->password)) {
             return response()->json([
@@ -43,26 +41,129 @@ class MemberController extends Controller
             ], 401);
         }
 
-        // Check if subscription is expired
-        if (!$member->isActive()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Subscription expired. Please contact support to renew.'
-            ], 401);
-        }
-
-        // Check machine ID if already set
-        if ($member->machine_id && $member->machine_id !== $request->machine_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Machine ID mismatch'
-            ], 401);
-        }
-
-        // Set machine ID if not set
-        if (!$member->machine_id) {
-            $member->machine_id = $request->machine_id;
-            $member->save();
+        // NEW: Check if using multi-app system
+        $appIdentifier = $request->input('app_identifier');
+        
+        if ($appIdentifier) {
+            // Multi-app login flow
+            $app = \App\Models\App::where('identifier', $appIdentifier)->first();
+            
+            if (!$app) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid app identifier'
+                ], 400);
+            }
+            
+            // Get or create subscription for this app
+            $subscription = $member->getSubscriptionForApp($app->id);
+            
+            if (!$subscription) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No subscription found for this app'
+                ], 401);
+            }
+            
+            // Check and update expired status
+            $member->checkAndUpdateExpiredStatus();
+            
+            // Check if subscription is expired for this app
+            if (!$subscription->isActive()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Subscription expired for this app. Please contact support to renew.'
+                ], 401);
+            }
+            
+            // Check machine ID for this app
+            if ($subscription->machine_id && $subscription->machine_id !== $request->machine_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Machine ID mismatch for this app'
+                ], 401);
+            }
+            
+            // Set machine ID for this app if not set
+            if (!$subscription->machine_id) {
+                $subscription->machine_id = $request->machine_id;
+            }
+            $subscription->last_login_at = now();
+            $subscription->save();
+            
+            $machineId = $subscription->machine_id;
+            $expiryDate = $subscription->expiry_date;
+            
+        } else {
+            // BACKWARD COMPATIBILITY: Legacy login - default to livekenceng app
+            $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
+            
+            if ($defaultApp) {
+                // Use livekenceng app subscription
+                $subscription = $member->getSubscriptionForApp($defaultApp->id);
+                
+                if (!$subscription) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No subscription found for livekenceng app'
+                    ], 401);
+                }
+                
+                // Check if subscription is expired
+                if (!$subscription->isActive()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Subscription expired. Please contact support to renew.'
+                    ], 401);
+                }
+                
+                // Check machine ID for this app
+                if ($subscription->machine_id && $subscription->machine_id !== $request->machine_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Machine ID mismatch'
+                    ], 401);
+                }
+                
+                // Set machine ID for this app if not set
+                if (!$subscription->machine_id) {
+                    $subscription->machine_id = $request->machine_id;
+                }
+                $subscription->last_login_at = now();
+                $subscription->save();
+                
+                $machineId = $subscription->machine_id;
+                $expiryDate = $subscription->expiry_date;
+                
+            } else {
+                // Fallback: Use old members table if no default app exists
+                $member->checkAndUpdateExpiredStatus();
+                
+                // Check if subscription is expired
+                if (!$member->isActive()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Subscription expired. Please contact support to renew.'
+                    ], 401);
+                }
+                
+                // Check machine ID if already set
+                if ($member->machine_id && $member->machine_id !== $request->machine_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Machine ID mismatch'
+                    ], 401);
+                }
+                
+                // Set machine ID if not set
+                if (!$member->machine_id) {
+                    $member->machine_id = $request->machine_id;
+                    $member->save();
+                }
+                
+                $machineId = $member->machine_id;
+                $expiryDate = $member->expiry_date;
+            }
         }
 
         return response()->json([
@@ -71,8 +172,8 @@ class MemberController extends Controller
                 'id' => $member->id,
                 'email' => $member->email,
                 'telegram_username' => $member->telegram_username,
-                'expiry_date' => $member->expiry_date?->toIso8601String(),
-                'machine_id' => $member->machine_id,
+                'expiry_date' => $expiryDate?->toIso8601String(),
+                'machine_id' => $machineId,
                 'created_at' => $member->created_at,
                 'updated_at' => $member->updated_at,
             ]
@@ -218,26 +319,120 @@ class MemberController extends Controller
             $member->checkAndUpdateExpiredStatus();
         }
 
-        if (!$member) {
-            // Create new member with random password
-            $generatedPassword = \Illuminate\Support\Str::random(12);
-            $member = Member::create([
-                'email' => $request->email,
-                'password' => Hash::make($generatedPassword),
-                'expiry_date' => now()->addDays($licenseKey->duration_days),
-            ]);
-            $isNewMember = true;
-        } else {
-            // Calculate new expiry date for existing member
-            $currentExpiry = $member->expiry_date && $member->expiry_date->isFuture() 
-                ? $member->expiry_date 
-                : now();
-
-            $newExpiry = $currentExpiry->addDays($licenseKey->duration_days);
+        // Check if license is for a specific app (multi-app system)
+        if ($licenseKey->app_id) {
+            // Validate app is active
+            $app = \App\Models\App::find($licenseKey->app_id);
+            if (!$app || !$app->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This license is for an inactive or invalid app'
+                ], 400);
+            }
             
-            // Update member
-            $member->expiry_date = $newExpiry;
-            $member->save();
+            // NEW: Multi-app system - handle app-specific subscriptions
+            if (!$member) {
+                // Create new member with random password
+                $generatedPassword = \Illuminate\Support\Str::random(12);
+                $member = Member::create([
+                    'email' => $request->email,
+                    'password' => Hash::make($generatedPassword),
+                ]);
+                $isNewMember = true;
+            }
+            
+            // Get or create subscription for this app
+            $subscription = $member->getSubscriptionForApp($licenseKey->app_id);
+            
+            if (!$subscription) {
+                // Create new subscription for this app
+                $subscription = \App\Models\MemberSubscription::create([
+                    'member_id' => $member->id,
+                    'app_id' => $licenseKey->app_id,
+                    'expiry_date' => now()->addDays($licenseKey->duration_days),
+                ]);
+            } else {
+                // Calculate new expiry date for existing subscription
+                $currentExpiry = $subscription->expiry_date && $subscription->expiry_date->isFuture() 
+                    ? $subscription->expiry_date 
+                    : now();
+
+                $newExpiry = $currentExpiry->addDays($licenseKey->duration_days);
+                
+                // Update subscription
+                $subscription->expiry_date = $newExpiry;
+                $subscription->save();
+            }
+            
+            $expiryDate = $subscription->expiry_date;
+            
+        } else {
+            // BACKWARD COMPATIBILITY: Legacy licenses without app_id -> default to livekenceng app
+            $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
+            
+            if ($defaultApp) {
+                // Handle as livekenceng app subscription
+                if (!$member) {
+                    // Create new member with random password
+                    $generatedPassword = \Illuminate\Support\Str::random(12);
+                    $member = Member::create([
+                        'email' => $request->email,
+                        'password' => Hash::make($generatedPassword),
+                    ]);
+                    $isNewMember = true;
+                }
+                
+                // Get or create subscription for livekenceng app
+                $subscription = $member->getSubscriptionForApp($defaultApp->id);
+                
+                if (!$subscription) {
+                    // Create new subscription for livekenceng app
+                    $subscription = \App\Models\MemberSubscription::create([
+                        'member_id' => $member->id,
+                        'app_id' => $defaultApp->id,
+                        'expiry_date' => now()->addDays($licenseKey->duration_days),
+                    ]);
+                } else {
+                    // Calculate new expiry date for existing subscription
+                    $currentExpiry = $subscription->expiry_date && $subscription->expiry_date->isFuture() 
+                        ? $subscription->expiry_date 
+                        : now();
+
+                    $newExpiry = $currentExpiry->addDays($licenseKey->duration_days);
+                    
+                    // Update subscription
+                    $subscription->expiry_date = $newExpiry;
+                    $subscription->save();
+                }
+                
+                $expiryDate = $subscription->expiry_date;
+                
+            } else {
+                // Fallback: Use old members table if no default app exists
+                if (!$member) {
+                    // Create new member with random password
+                    $generatedPassword = \Illuminate\Support\Str::random(12);
+                    $member = Member::create([
+                        'email' => $request->email,
+                        'password' => Hash::make($generatedPassword),
+                        'expiry_date' => now()->addDays($licenseKey->duration_days),
+                    ]);
+                    $isNewMember = true;
+                } else {
+                    // Calculate new expiry date for existing member
+                    $currentExpiry = $member->expiry_date && $member->expiry_date->isFuture() 
+                        ? $member->expiry_date 
+                        : now();
+
+                    $newExpiry = $currentExpiry->addDays($licenseKey->duration_days);
+                    
+                    // Update member
+                    $member->expiry_date = $newExpiry;
+                    $member->save();
+                }
+                
+                $expiryDate = $member->expiry_date;
+            }
         }
 
         // Mark license as used
@@ -251,7 +446,7 @@ class MemberController extends Controller
             'message' => $isNewMember 
                 ? 'New account created and license activated successfully' 
                 : 'License key redeemed successfully',
-            'expiry_date' => $member->expiry_date->toIso8601String(),
+            'expiry_date' => $expiryDate->toIso8601String(),
             'days_added' => $licenseKey->duration_days,
             'is_new_member' => $isNewMember,
         ];

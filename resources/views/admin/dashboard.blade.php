@@ -88,6 +88,9 @@
                     <button onclick="switchTab('pricing')" id="tab-pricing" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         License Pricing
                     </button>
+                    <button onclick="switchTab('apps')" id="tab-apps" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Apps
+                    </button>
                     <a href="{{ route('admin.updates.index') }}" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Software Updates
                     </a>
@@ -311,7 +314,85 @@
                 </div>
             </div>
 
+            <!-- Apps Tab -->
+            <div id="content-apps" class="tab-content p-6 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Apps Management</h2>
+                    <button onclick="openAddAppModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                        + Add App
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Display Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Identifier</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscriptions</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Keys</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plans</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Apps will be loaded dynamically via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
+    </div>
+</div>
+
+<!-- Add/Edit App Modal -->
+<div id="appModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+        <h3 id="appModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add App</h3>
+        <form id="appForm">
+            <input type="hidden" id="appId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+                <input type="text" id="appName" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="e.g., ShopeeApp">
+                <p class="text-xs text-gray-500 mt-1">Unique internal name</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Display Name</label>
+                <input type="text" id="appDisplayName" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="e.g., Shopee Automation App">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Identifier</label>
+                <input type="text" id="appIdentifier" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="e.g., shopee-app">
+                <p class="text-xs text-gray-500 mt-1">Used in API calls (app_identifier)</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <textarea id="appDescription" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" rows="3" placeholder="Optional description"></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" id="appIsActive" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked>
+                    <span class="ml-2 text-sm text-gray-700">Active</span>
+                </label>
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Save
+                </button>
+                <button type="button" onclick="closeAppModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -365,6 +446,14 @@
     <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
         <h3 class="text-2xl font-bold text-gray-900 mb-6">Generate License Keys</h3>
         <form id="licenseForm">
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">App</label>
+                <select id="licenseAppId" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <option value="">Livekenceng (Default)</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Leave default for Livekenceng app, or select other app</p>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Plan</label>
                 <select id="licensePlanId" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
@@ -526,6 +615,13 @@
 
         // Persist selected tab so reloads stay on the same tab
         try { localStorage.setItem('adminActiveTab', tab); } catch (e) {}
+        
+        // Load data for specific tabs
+        if (tab === 'apps') {
+            loadApps();
+        } else if (tab === 'members') {
+            // Members are loaded on page load, so only reload if needed
+        }
     }
 
     // Member Management
@@ -702,8 +798,38 @@
     // License Management
     function openGenerateLicenseModal() {
         document.getElementById('licenseForm').reset();
+        // Load apps into the dropdown
+        loadAppsForLicenseModal();
         document.getElementById('licenseModal').classList.remove('hidden');
         document.getElementById('licenseModal').classList.add('flex');
+    }
+
+    function loadAppsForLicenseModal() {
+        fetch('/admin/apps')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const appSelect = document.getElementById('licenseAppId');
+                    // Keep the first option (No App - Legacy)
+                    const firstOption = appSelect.options[0];
+                    appSelect.innerHTML = '';
+                    appSelect.appendChild(firstOption);
+                    
+                    // Add apps to dropdown (excluding livekenceng as it's the default legacy app)
+                    data.apps.forEach(app => {
+                        // Skip livekenceng - it's the default for legacy licenses
+                        if (app.identifier !== 'livekenceng') {
+                            const option = document.createElement('option');
+                            option.value = app.id;
+                            option.textContent = `${app.display_name} (${app.identifier})`;
+                            appSelect.appendChild(option);
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading apps:', error);
+            });
     }
 
     function closeLicenseModal() {
@@ -741,6 +867,7 @@
         const data = {
             plan_id: document.getElementById('licensePlanId').value,
             quantity: document.getElementById('licenseQuantity').value,
+            app_id: document.getElementById('licenseAppId').value || null,
         };
         
         fetch('/admin/licenses/generate', {
@@ -966,6 +1093,159 @@
         });
     });
 
+    // App Management
+    function loadApps() {
+        fetch('/admin/apps')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderAppsTable(data.apps);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading apps:', error);
+            });
+    }
+
+    function renderAppsTable(apps) {
+        const tbody = document.getElementById('appsTableBody');
+        tbody.innerHTML = '';
+        
+        apps.forEach(app => {
+            const row = document.createElement('tr');
+            const statusBadge = app.is_active 
+                ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>'
+                : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>';
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${app.name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.display_name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${app.identifier}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.subscriptions_count}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.license_keys_count}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.license_plans_count}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="toggleAppActive(${app.id})" class="text-${app.is_active ? 'yellow' : 'green'}-600 hover:text-${app.is_active ? 'yellow' : 'green'}-900 mr-3">
+                        ${app.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button onclick="editApp(${app.id})" class="text-primary-600 hover:text-primary-900 mr-3">Edit</button>
+                    <button onclick="deleteApp(${app.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function openAddAppModal() {
+        document.getElementById('appModalTitle').textContent = 'Add App';
+        document.getElementById('appForm').reset();
+        document.getElementById('appId').value = '';
+        document.getElementById('appIsActive').checked = true;
+        document.getElementById('appModal').classList.remove('hidden');
+        document.getElementById('appModal').classList.add('flex');
+    }
+
+    function closeAppModal() {
+        document.getElementById('appModal').classList.add('hidden');
+        document.getElementById('appModal').classList.remove('flex');
+    }
+
+    function editApp(id) {
+        fetch(`/admin/apps/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const app = data.app;
+                    document.getElementById('appModalTitle').textContent = 'Edit App';
+                    document.getElementById('appId').value = app.id;
+                    document.getElementById('appName').value = app.name;
+                    document.getElementById('appDisplayName').value = app.display_name;
+                    document.getElementById('appIdentifier').value = app.identifier;
+                    document.getElementById('appDescription').value = app.description || '';
+                    document.getElementById('appIsActive').checked = app.is_active;
+                    document.getElementById('appModal').classList.remove('hidden');
+                    document.getElementById('appModal').classList.add('flex');
+                }
+            });
+    }
+
+    function deleteApp(id) {
+        if (!confirm('Are you sure you want to delete this app? This will also delete all associated subscriptions, license keys, and plans.')) return;
+        
+        fetch(`/admin/apps/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadApps();
+            } else {
+                showToast(data.message, 'error');
+            }
+        });
+    }
+
+    function toggleAppActive(id) {
+        fetch(`/admin/apps/${id}/toggle-active`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadApps();
+            } else {
+                showToast(data.message, 'error');
+            }
+        });
+    }
+
+    document.getElementById('appForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('appId').value;
+        const url = id ? `/admin/apps/${id}` : '/admin/apps';
+        const method = id ? 'PUT' : 'POST';
+        const data = {
+            name: document.getElementById('appName').value,
+            display_name: document.getElementById('appDisplayName').value,
+            identifier: document.getElementById('appIdentifier').value,
+            description: document.getElementById('appDescription').value,
+            is_active: document.getElementById('appIsActive').checked
+        };
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeAppModal();
+                loadApps();
+            } else if (data.errors) {
+                alert(Object.values(data.errors).flat().join('\n'));
+            } else {
+                showToast(data.message || 'Error saving app', 'error');
+            }
+        });
+    });
+
     // Restore the last active tab on page load
     document.addEventListener('DOMContentLoaded', function () {
         try {
@@ -983,6 +1263,44 @@
         document.getElementById('memberStatusFilter').addEventListener('change', loadMembers);
         document.getElementById('memberSortBy').addEventListener('change', loadMembers);
     });
+
+    // Toast notification function
+    function showToast(message, type = 'success') {
+        // Create toast element if it doesn't exist
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            toast.className = 'fixed top-4 right-4 z-50 hidden';
+            toast.innerHTML = `
+                <div class="bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+                    <div class="flex items-center">
+                        <div id="toastIcon" class="flex-shrink-0"></div>
+                        <div class="ml-3">
+                            <p id="toastMessage" class="text-sm font-medium text-gray-900"></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+        }
+        
+        const toastIcon = document.getElementById('toastIcon');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        toastMessage.textContent = message;
+        
+        if (type === 'success') {
+            toastIcon.innerHTML = '<svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>';
+        } else if (type === 'error') {
+            toastIcon.innerHTML = '<svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>';
+        }
+        
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
 
     </script>
 @endpush

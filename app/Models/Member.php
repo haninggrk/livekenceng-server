@@ -59,6 +59,39 @@ class Member extends Model
     }
 
     /**
+     * Subscriptions for different apps
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(MemberSubscription::class);
+    }
+
+    /**
+     * Active subscriptions
+     */
+    public function activeSubscriptions()
+    {
+        return $this->hasMany(MemberSubscription::class)->where('expiry_date', '>', now());
+    }
+
+    /**
+     * Check if member has active subscription for a specific app
+     */
+    public function hasActiveSubscriptionForApp($appId): bool
+    {
+        $subscription = $this->subscriptions()->where('app_id', $appId)->first();
+        return $subscription && $subscription->isActive();
+    }
+
+    /**
+     * Get subscription for a specific app
+     */
+    public function getSubscriptionForApp($appId)
+    {
+        return $this->subscriptions()->where('app_id', $appId)->first();
+    }
+
+    /**
      * Check if member is expired and update machine_id if needed
      */
     public function checkAndUpdateExpiredStatus(): bool

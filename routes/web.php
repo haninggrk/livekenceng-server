@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\AppController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\ShopeeAccountController;
@@ -102,6 +103,14 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'update']);
     Route::delete('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'destroy']);
     Route::put('/members/{member}/telegram', [ShopeeAccountController::class, 'updateTelegram']);
+    
+    // App management routes (AJAX)
+    Route::get('/apps', [AppController::class, 'index']);
+    Route::get('/apps/{app}', [AppController::class, 'show']);
+    Route::post('/apps', [AppController::class, 'store']);
+    Route::put('/apps/{app}', [AppController::class, 'update']);
+    Route::delete('/apps/{app}', [AppController::class, 'destroy']);
+    Route::post('/apps/{app}/toggle-active', [AppController::class, 'toggleActive']);
 });
 
 // Reseller authentication routes

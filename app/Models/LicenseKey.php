@@ -9,6 +9,7 @@ class LicenseKey extends Model
 {
     protected $fillable = [
         'code',
+        'app_id',
         'duration_days',
         'plan_id',
         'price',
@@ -73,5 +74,13 @@ class LicenseKey extends Model
     public function plan()
     {
         return $this->belongsTo(LicensePlan::class, 'plan_id');
+    }
+
+    /**
+     * App associated with this license
+     */
+    public function app()
+    {
+        return $this->belongsTo(App::class);
     }
 }
