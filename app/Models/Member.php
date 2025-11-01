@@ -75,6 +75,22 @@ class Member extends Model
     }
 
     /**
+     * Niches owned by this member
+     */
+    public function niches()
+    {
+        return $this->hasMany(Niche::class);
+    }
+
+    /**
+     * Product sets owned by this member
+     */
+    public function productSets()
+    {
+        return $this->hasMany(ProductSet::class);
+    }
+
+    /**
      * Check if member has active subscription for a specific app
      */
     public function hasActiveSubscriptionForApp($appId): bool
