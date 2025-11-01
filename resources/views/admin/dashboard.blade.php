@@ -894,7 +894,7 @@
                 <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
                     <h3 class="text-xl font-bold text-white">${appDisplayName}</h3>
                 </div>
-                <div class="overflow-x-auto">
+                <div id="licensesTableWrapper-${appId}" class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -907,8 +907,8 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            ${appLicenses.map(license => `
+                        <tbody class="bg-white divide-y divide-gray-200" id="licensesTableBody-${appId}">
+                            ${appLicenses.slice(0, 5).map(license => `
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">${license.code}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.duration_days} days</td>
@@ -940,9 +940,55 @@
                         </tbody>
                     </table>
                 </div>
+                ${appLicenses.length > 5 ? `
+                    <div class="px-6 py-4 bg-gray-50 text-center">
+                        <p class="text-sm text-gray-600">Showing 5 of ${appLicenses.length} licenses</p>
+                        <button onclick="showAllLicenses('${appId}', ${JSON.stringify(appLicenses).replace(/"/g, '&quot;')})" class="mt-2 text-primary-600 hover:text-primary-900 text-sm font-medium">Show All</button>
+                    </div>
+                ` : ''}
             `;
             content.appendChild(section);
         });
+    }
+
+    function showAllLicenses(appId, licenses) {
+        const tbody = document.getElementById('licensesTableBody-' + appId);
+        const wrapper = document.getElementById('licensesTableWrapper-' + appId);
+        const nextSibling = wrapper.nextElementSibling;
+        
+        if (nextSibling && nextSibling.classList.contains('px-6')) {
+            nextSibling.remove();
+        }
+        
+        tbody.innerHTML = licenses.map(license => `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">${license.code}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.duration_days} days</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${license.is_used 
+                        ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Used</span>'
+                        : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>'
+                    }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.member?.email || '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${license.creator 
+                        ? (license.creator.name || license.creator.email)
+                        : license.reseller 
+                            ? license.reseller.name + ' (Reseller)'
+                            : 'System'
+                    }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(license.created_at).toISOString().split('T')[0]}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="copyLicense('${license.code}')" class="text-primary-600 hover:text-primary-900 mr-3">Copy</button>
+                    ${!license.is_used 
+                        ? `<button onclick="deleteLicense(${license.id})" class="text-red-600 hover:text-red-900">Delete</button>`
+                        : ''
+                    }
+                </td>
+            </tr>
+        `).join('');
     }
 
     function closeLicenseModal() {

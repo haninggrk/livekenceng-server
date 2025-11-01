@@ -114,7 +114,7 @@
 
                 <!-- Licenses Table -->
                 <h3 class="text-xl font-bold text-gray-900 mb-4">License Keys</h3>
-                <div class="overflow-x-auto">
+                <div id="licensesTableWrapper-{{ $app->identifier }}" class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -132,6 +132,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="licensesPagination-{{ $app->identifier }}"></div>
             </div>
             @endforeach
         </div>
@@ -223,17 +224,22 @@
             });
     }
 
-    // Render licenses table
+    // Render licenses table with pagination (show 5 latest by default)
     function renderLicenses(appIdentifier, licenses) {
         const tbody = document.getElementById('licensesTableBody-' + appIdentifier);
+        const pagination = document.getElementById('licensesPagination-' + appIdentifier);
         tbody.innerHTML = '';
+        pagination.innerHTML = '';
         
         if (licenses.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No licenses yet</td></tr>';
             return;
         }
 
-        licenses.forEach(license => {
+        // Show only 5 latest by default
+        const displayedLicenses = licenses.slice(0, 5);
+        
+        displayedLicenses.forEach(license => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">${license.code}</td>
@@ -253,6 +259,42 @@
             `;
             tbody.appendChild(row);
         });
+
+        // Show pagination if more than 5 licenses
+        if (licenses.length > 5) {
+            pagination.innerHTML = `
+                <div class="mt-4 px-6 py-3 bg-gray-50 text-center">
+                    <p class="text-sm text-gray-600">Showing 5 of ${licenses.length} licenses</p>
+                    <button onclick="showAllLicensesReseller('${appIdentifier}', ${JSON.stringify(licenses).replace(/"/g, '&quot;')})" class="mt-2 text-primary-600 hover:text-primary-900 text-sm font-medium">Show All</button>
+                </div>
+            `;
+        }
+    }
+
+    function showAllLicensesReseller(appIdentifier, licenses) {
+        const tbody = document.getElementById('licensesTableBody-' + appIdentifier);
+        const pagination = document.getElementById('licensesPagination-' + appIdentifier);
+        
+        tbody.innerHTML = licenses.map(license => `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">${license.code}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.duration_days} days</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp ${parseFloat(license.price).toLocaleString('id-ID')}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${license.is_used 
+                        ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Used</span>'
+                        : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>'
+                    }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.member?.email || '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(license.created_at).toLocaleString('id-ID')}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="copyLicense('${license.code}')" class="text-primary-600 hover:text-primary-900">Copy</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        pagination.innerHTML = '';
     }
 
     // Copy license key
