@@ -98,6 +98,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     // Shopee accounts and Telegram management routes (AJAX)
     Route::get('/shopee-accounts', [ShopeeAccountController::class, 'index']);
     Route::get('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'show']);
+    Route::get('/shopee-accounts/{shopeeAccount}/active-session', [ShopeeAccountController::class, 'getActiveSession']);
     Route::get('/members/{member}/shopee-accounts', [ShopeeAccountController::class, 'getByMember']);
     Route::post('/shopee-accounts', [ShopeeAccountController::class, 'store']);
     Route::put('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'update']);

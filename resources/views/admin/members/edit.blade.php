@@ -75,7 +75,7 @@
                 </div>
             </div>
 
-            <!-- Subscriptions Section -->
+            <!-- Subscriptions & Shopee Accounts Section -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- App Subscriptions -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -119,6 +119,50 @@
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">No subscriptions</h3>
                         <p class="mt-1 text-sm text-gray-500">This member has no app subscriptions yet.</p>
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Shopee Accounts -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Shopee Accounts</h2>
+                    </div>
+
+                    <div class="space-y-4" id="shopeeAccountsContainer">
+                        @foreach($member->shopeeAccounts as $account)
+                        <div class="border border-gray-200 rounded-lg p-4" data-account-id="{{ $account->id }}">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">{{ $account->name }}</h3>
+                                    <p class="text-sm text-gray-500">{{ $account->email }}</p>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $account->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                        {{ $account->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <p class="text-xs text-gray-500 mb-1">Cookie</p>
+                                <p class="text-xs font-mono bg-gray-50 p-2 rounded border border-gray-200 break-all">{{ Str::limit($account->cookie, 150) }}</p>
+                            </div>
+                            <div class="mt-3" id="session-info-{{ $account->id }}">
+                                <button onclick="loadActiveSession({{ $account->id }})" class="text-xs text-primary-600 hover:text-primary-900 font-medium">
+                                    🔍 Check Active Live Session
+                                </button>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    @if($member->shopeeAccounts->isEmpty())
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No Shopee accounts</h3>
+                        <p class="mt-1 text-sm text-gray-500">This member has no Shopee accounts yet.</p>
                     </div>
                     @endif
                 </div>
@@ -244,6 +288,61 @@ function editMachineId(subscriptionId, currentMachineId, appIdentifier) {
     .catch(error => {
         console.error('Error:', error);
         showToast('Error updating machine ID', 'error');
+    });
+}
+
+function loadActiveSession(accountId) {
+    const sessionInfoEl = document.getElementById(`session-info-${accountId}`);
+    
+    // Show loading state
+    sessionInfoEl.innerHTML = `
+        <span class="text-xs text-gray-500">⏳ Checking...</span>
+    `;
+    
+    // We need to call the ShopeeService from the backend, so let's create an admin endpoint
+    // For now, we'll call it via AJAX
+    fetch(`/admin/shopee-accounts/${accountId}/active-session`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.session_id) {
+            const liveUrl = `http://live.shopee.co.id/share?from=live&session=${data.session_id}`;
+            sessionInfoEl.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <a href="${liveUrl}" target="_blank" class="text-xs text-primary-600 hover:text-primary-900 font-medium underline">
+                        🔴 Go to Live: Session ${data.session_id}
+                    </a>
+                    <button onclick="loadActiveSession(${accountId})" class="text-xs text-gray-500 hover:text-gray-700">
+                        🔄 Refresh
+                    </button>
+                </div>
+            `;
+        } else {
+            sessionInfoEl.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500">❌ No active live session</span>
+                    <button onclick="loadActiveSession(${accountId})" class="text-xs text-gray-500 hover:text-gray-700">
+                        🔄 Refresh
+                    </button>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        sessionInfoEl.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-red-600">⚠️ Error checking session</span>
+                <button onclick="loadActiveSession(${accountId})" class="text-xs text-gray-500 hover:text-gray-700">
+                    🔄 Retry
+                </button>
+            </div>
+        `;
     });
 }
 </script>

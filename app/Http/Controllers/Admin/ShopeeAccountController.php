@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ShopeeAccount;
 use App\Models\Member;
+use App\Services\ShopeeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -138,6 +139,26 @@ class ShopeeAccountController extends Controller
             'success' => true,
             'message' => 'Telegram username updated successfully',
             'member' => $member
+        ]);
+    }
+
+    /**
+     * Get active session for a Shopee account
+     */
+    public function getActiveSession(ShopeeAccount $shopeeAccount, ShopeeService $shopeeService)
+    {
+        if (!$shopeeAccount->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shopee account is inactive'
+            ], 400);
+        }
+
+        $activeSessionId = $shopeeService->getActiveSessionId($shopeeAccount->cookie);
+
+        return response()->json([
+            'success' => true,
+            'session_id' => $activeSessionId
         ]);
     }
 }
