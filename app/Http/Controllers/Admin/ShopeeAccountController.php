@@ -154,11 +154,26 @@ class ShopeeAccountController extends Controller
             ], 400);
         }
 
-        $activeSessionId = $shopeeService->getActiveSessionId($shopeeAccount->cookie);
+        $sessionData = $shopeeService->getActiveSessionData($shopeeAccount->cookie);
+
+        if (!$sessionData) {
+            return response()->json([
+                'success' => true,
+                'session_id' => null,
+                'gmv' => 0
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'session_id' => $activeSessionId
+            'session_id' => $sessionData['session_id'],
+            'gmv' => $sessionData['gmv'],
+            'views' => $sessionData['views'],
+            'likes' => $sessionData['likes'],
+            'comments' => $sessionData['comments'],
+            'atc' => $sessionData['atc'],
+            'placed_orders' => $sessionData['placed_orders'],
+            'confirmed_orders' => $sessionData['confirmed_orders']
         ]);
     }
 }

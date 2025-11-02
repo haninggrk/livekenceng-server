@@ -62,12 +62,12 @@ class ShopeeService
     }
 
     /**
-     * Get active live stream session ID (status = 1)
+     * Get active live stream session data (status = 1) including GMV
      * 
      * @param string $cookie Shopee account cookie
-     * @return string|null Active session ID or null if no active session
+     * @return array|null Active session data (session_id, gmv) or null if no active session
      */
-    public function getActiveSessionId(string $cookie): ?string
+    public function getActiveSessionData(string $cookie): ?array
     {
         try {
             $response = Http::withHeaders([
@@ -92,7 +92,16 @@ class ShopeeService
                     // Find first session with status = 1 (active/live)
                     foreach ($data['data']['list'] as $record) {
                         if (isset($record['status']) && $record['status'] === 1 && isset($record['sessionId'])) {
-                            return (string)$record['sessionId'];
+                            return [
+                                'session_id' => (string)$record['sessionId'],
+                                'gmv' => $record['confirmedSales'] ?? $record['placedSales'] ?? 0,
+                                'views' => $record['views'] ?? 0,
+                                'likes' => $record['likes'] ?? 0,
+                                'comments' => $record['comments'] ?? 0,
+                                'atc' => $record['atc'] ?? 0,
+                                'placed_orders' => $record['placedOrders'] ?? 0,
+                                'confirmed_orders' => $record['confirmedOrders'] ?? 0,
+                            ];
                         }
                     }
                     
@@ -115,6 +124,18 @@ class ShopeeService
             ]);
             return null;
         }
+    }
+
+    /**
+     * Get active live stream session ID (status = 1)
+     * 
+     * @param string $cookie Shopee account cookie
+     * @return string|null Active session ID or null if no active session
+     */
+    public function getActiveSessionId(string $cookie): ?string
+    {
+        $data = $this->getActiveSessionData($cookie);
+        return $data['session_id'] ?? null;
     }
 
     /**

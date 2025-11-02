@@ -211,6 +211,10 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     });
 });
 
+function formatNumber(num) {
+    return new Intl.NumberFormat('id-ID').format(num);
+}
+
 function showToast(message, type = 'success') {
     // Create toast element if it doesn't exist
     let toast = document.getElementById('toast');
@@ -312,10 +316,11 @@ function loadActiveSession(accountId) {
     .then(data => {
         if (data.success && data.session_id) {
             const liveUrl = `http://live.shopee.co.id/share?from=live&session=${data.session_id}`;
+            const gmvFormatted = formatNumber(data.gmv || 0);
             sessionInfoEl.innerHTML = `
                 <div class="flex items-center gap-2">
                     <a href="${liveUrl}" target="_blank" class="text-xs text-primary-600 hover:text-primary-900 font-medium underline">
-                        🔴 Go to Live: Session ${data.session_id}
+                        🔴 Go to Live: Session ${data.session_id} (GMV: Rp ${gmvFormatted})
                     </a>
                     <button onclick="loadActiveSession(${accountId})" class="text-xs text-gray-500 hover:text-gray-700">
                         🔄 Refresh
