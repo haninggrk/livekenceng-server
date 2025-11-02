@@ -94,6 +94,9 @@
                     <button onclick="switchTab('niches')" id="tab-niches" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Niches & Product Sets
                     </button>
+                    <button onclick="switchTab('active-livestream')" id="tab-active-livestream" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Active Livestream
+                    </button>
                     <a href="{{ route('admin.updates.index') }}" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Software Updates
                     </a>
@@ -309,6 +312,37 @@
                     </svg>
                     <h3 class="mt-2 text-sm font-medium text-gray-900">Select a member to view niches</h3>
                     <p class="mt-1 text-sm text-gray-500">Search for a member by email to get started.</p>
+                </div>
+            </div>
+
+            <!-- Active Livestream Tab -->
+            <div id="content-active-livestream" class="tab-content p-6 hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Active Livestreams</h2>
+                    <p class="text-gray-600 mb-4">Showing all active livestreams from all members with active Shopee accounts.</p>
+                    <button onclick="loadActiveLivestreams()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        🔄 Refresh List
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Live Link</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GMV</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeLivestreamsTableBody" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                    Click "Refresh List" to load active livestreams
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -690,7 +724,86 @@
             document.getElementById('selectedMemberInfo').classList.add('hidden');
             document.getElementById('nichesSection').classList.add('hidden');
             document.getElementById('nichesEmptyState').classList.remove('hidden');
+        } else if (tab === 'active-livestream') {
+            // Load active livestreams when tab is opened
+            loadActiveLivestreams();
         }
+    }
+
+    function loadActiveLivestreams() {
+        const tbody = document.getElementById('activeLivestreamsTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                    ⏳ Loading active livestreams...
+                </td>
+            </tr>
+        `;
+
+        fetch('/admin/livestreams/active')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderActiveLivestreams(data.livestreams);
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-red-600">
+                                Error loading livestreams
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading livestreams:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-red-600">
+                            Error loading livestreams
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function renderActiveLivestreams(livestreams) {
+        const tbody = document.getElementById('activeLivestreamsTableBody');
+        tbody.innerHTML = '';
+
+        if (livestreams.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                        No active livestreams found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        livestreams.forEach((item, index) => {
+            const row = document.createElement('tr');
+            const liveUrl = `http://live.shopee.co.id/share?from=live&session=${item.session_id}`;
+            const gmvFormatted = item.gmv ? new Intl.NumberFormat('id-ID').format(item.gmv) : '0';
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${index + 1}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">${item.member_email}</div>
+                    <div class="text-sm text-gray-500">${item.account_name}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <a href="${liveUrl}" target="_blank" class="text-sm text-primary-600 hover:text-primary-900 font-medium underline">
+                        🔴 Session ${item.session_id}
+                    </a>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    Rp ${gmvFormatted}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
     }
 
     // Niches & Product Sets Management

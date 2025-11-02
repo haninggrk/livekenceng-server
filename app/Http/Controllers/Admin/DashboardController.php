@@ -10,6 +10,7 @@ use App\Models\LicensePlan;
 use App\Models\Niche;
 use App\Models\ProductSet;
 use App\Models\ProductSetItem;
+use App\Services\ShopeeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -887,5 +888,46 @@ class DashboardController extends Controller
         };
 
         return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Get all active livestreams from all members
+     */
+    public function getActiveLivestreams(Request $request, ShopeeService $shopeeService)
+    {
+        // Get all active members with active Shopee accounts
+        $members = Member::with(['shopeeAccounts' => function($query) {
+            $query->where('is_active', true);
+        }])->get();
+
+        $activeLivestreams = [];
+
+        foreach ($members as $member) {
+            foreach ($member->shopeeAccounts as $account) {
+                $sessionData = $shopeeService->getActiveSessionData($account->cookie);
+                
+                if ($sessionData && $sessionData['session_id']) {
+                    $activeLivestreams[] = [
+                        'member_email' => $member->email,
+                        'account_name' => $account->name,
+                        'account_id' => $account->id,
+                        'session_id' => $sessionData['session_id'],
+                        'gmv' => $sessionData['gmv'],
+                        'views' => $sessionData['views'],
+                        'likes' => $sessionData['likes'],
+                        'comments' => $sessionData['comments'],
+                        'atc' => $sessionData['atc'],
+                        'placed_orders' => $sessionData['placed_orders'],
+                        'confirmed_orders' => $sessionData['confirmed_orders']
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'livestreams' => $activeLivestreams,
+            'total' => count($activeLivestreams)
+        ]);
     }
 }

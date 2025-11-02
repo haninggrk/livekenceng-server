@@ -113,6 +113,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/apps/{app}', [AppController::class, 'destroy']);
     Route::post('/apps/{app}/toggle-active', [AppController::class, 'toggleActive']);
     
+    // Active Livestream routes (AJAX)
+    Route::get('/livestreams/active', [DashboardController::class, 'getActiveLivestreams']);
+    
     // Niche and Product Set management routes (AJAX)
     Route::get('/members/{member}/niches', [DashboardController::class, 'getMemberNiches']);
     Route::post('/niches', [DashboardController::class, 'createNiche']);
