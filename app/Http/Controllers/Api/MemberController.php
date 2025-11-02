@@ -239,7 +239,7 @@ class MemberController extends Controller
     /**
      * Get machine ID by email
      */
-    public function getMachineId($email)
+    public function getMachineId(Request $request, $email)
     {
         $member = Member::where('email', $email)->first();
 
@@ -253,24 +253,39 @@ class MemberController extends Controller
         // Check and update expired status
         $member->checkAndUpdateExpiredStatus();
 
-        // Get machine_id from livekenceng subscription for backward compatibility
-        $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
-        if ($defaultApp) {
-            $subscription = $member->getSubscriptionForApp($defaultApp->id);
-            if ($subscription) {
-                return response()->json([
-                    'success' => true,
-                    'email' => $member->email,
-                    'machine_id' => $subscription->machine_id ?? $member->machine_id
-                ]);
-            }
+        // Determine which app to use
+        $appIdentifier = $request->input('app_identifier');
+        
+        if (!$appIdentifier) {
+            // Default to legacy livekenceng app for backward compatibility
+            $appIdentifier = 'livekenceng';
         }
 
-        // Fallback to old member table
+        // Find the app by identifier
+        $app = \App\Models\App::where('identifier', $appIdentifier)->first();
+
+        if (!$app) {
+            return response()->json([
+                'success' => false,
+                'message' => 'App not found'
+            ], 404);
+        }
+
+        // Get subscription for this app
+        $subscription = $member->getSubscriptionForApp($app->id);
+        
+        if (!$subscription) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No subscription found for this app'
+            ], 404);
+        }
+
         return response()->json([
             'success' => true,
             'email' => $member->email,
-            'machine_id' => $member->machine_id
+            'machine_id' => $subscription->machine_id,
+            'app_identifier' => $app->identifier
         ]);
     }
 

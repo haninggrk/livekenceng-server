@@ -85,7 +85,7 @@
 
                     <div class="space-y-4" id="subscriptionsContainer">
                         @foreach($member->subscriptions as $subscription)
-                        <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="border border-gray-200 rounded-lg p-4" data-subscription-id="{{ $subscription->id }}">
                             <div class="flex justify-between items-start mb-2">
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900">{{ $subscription->app->display_name ?? 'Unknown App' }}</h3>
@@ -97,8 +97,11 @@
                             </div>
                             <div class="grid grid-cols-2 gap-4 mt-4">
                                 <div>
-                                    <p class="text-xs text-gray-500">Machine ID</p>
-                                    <p class="text-sm font-medium text-gray-900 font-mono">{{ $subscription->machine_id ? Str::limit($subscription->machine_id, 10) : '-' }}</p>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <p class="text-xs text-gray-500">Machine ID</p>
+                                        <button onclick="editMachineId({{ $subscription->id }}, '{{ addslashes($subscription->machine_id ?? '') }}', '{{ $subscription->app->identifier }}')" class="text-primary-600 hover:text-primary-900 text-xs font-medium">Edit</button>
+                                    </div>
+                                    <p id="machine-id-display-{{ $subscription->id }}" class="text-sm font-medium text-gray-900 font-mono">{{ $subscription->machine_id ? Str::limit($subscription->machine_id, 20) : '-' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Expiry Date</p>
@@ -199,6 +202,49 @@ function showToast(message, type = 'success') {
     setTimeout(() => {
         toast.classList.add('hidden');
     }, 3000);
+}
+
+function editMachineId(subscriptionId, currentMachineId, appIdentifier) {
+    const newMachineId = prompt('Enter new Machine ID:', currentMachineId || '');
+    
+    if (newMachineId === null) return; // User cancelled
+    
+    if (!newMachineId.trim()) {
+        showToast('Machine ID cannot be empty', 'error');
+        return;
+    }
+    
+    const data = {
+        email: '{{ $member->email }}',
+        machine_id: newMachineId.trim(),
+        app_identifier: appIdentifier
+    };
+    
+    fetch('/api/members/machine-id', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Update display
+            const displayEl = document.getElementById(`machine-id-display-${subscriptionId}`);
+            if (displayEl) {
+                displayEl.textContent = data.machine_id.length > 20 ? data.machine_id.substring(0, 20) + '...' : data.machine_id;
+            }
+            showToast('Machine ID updated successfully', 'success');
+        } else {
+            showToast(data.message || 'Error updating machine ID', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error updating machine ID', 'error');
+    });
 }
 </script>
 @endpush

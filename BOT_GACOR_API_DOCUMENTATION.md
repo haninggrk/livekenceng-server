@@ -77,14 +77,17 @@ POST /api/members/change-password
 
 ### Get Machine ID
 ```
-GET /api/members/machine-id/user@example.com
+GET /api/members/machine-id/user@example.com?app_identifier=bot-gacor
 ```
+**Query Params:**
+- `app_identifier` (optional): App identifier. If omitted, defaults to `livekenceng` (legacy)
 **Response:**
 ```json
 {
   "success": true,
   "email": "user@example.com",
-  "machine_id": "device-hash-123"
+  "machine_id": "device-hash-123",
+  "app_identifier": "bot-gacor"
 }
 ```
 
@@ -96,7 +99,20 @@ POST /api/members/machine-id
 ```json
 {
   "email": "user@example.com",
-  "machine_id": "new-device-hash-123"
+  "machine_id": "new-device-hash-123",
+  "app_identifier": "bot-gacor"
+}
+```
+**Note:** `app_identifier` is optional - if omitted, defaults to `livekenceng` (legacy app).
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Machine ID updated successfully",
+  "email": "user@example.com",
+  "machine_id": "new-device-hash-123",
+  "app_identifier": "bot-gacor"
 }
 ```
 
