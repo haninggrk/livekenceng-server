@@ -166,8 +166,99 @@
                     </div>
                     @endif
                 </div>
+
+                <!-- Device Metadata -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Device Metadata</h2>
+                        <button onclick="openAddDeviceMetadataModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            + Add Device
+                        </button>
+                    </div>
+
+                    <div class="space-y-4" id="deviceMetadataContainer">
+                        @foreach($member->deviceMetadata as $device)
+                        <div class="border border-gray-200 rounded-lg p-4" data-device-id="{{ $device->id }}">
+                            <div class="flex justify-between items-start">
+                                <div class="grid grid-cols-2 gap-4 flex-1">
+                                    <div>
+                                        <p class="text-xs text-gray-500">Manufacturer</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $device->manufacturer ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Device Name</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $device->device_name ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Device Model</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $device->device_model ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">ROM</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $device->rom ?? '-' }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 ml-4">
+                                    <button onclick="editDeviceMetadata({{ $device->id }})" class="text-primary-600 hover:text-primary-900 text-sm font-medium">Edit</button>
+                                    <button onclick="deleteDeviceMetadata({{ $device->id }})" class="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    @if($member->deviceMetadata->isEmpty())
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No device metadata</h3>
+                        <p class="mt-1 text-sm text-gray-500">This member has no device metadata yet.</p>
+                    </div>
+                    @endif
+                </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Add/Edit Device Metadata Modal -->
+<div id="deviceMetadataModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+        <h3 id="deviceMetadataModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Device Metadata</h3>
+        <form id="deviceMetadataForm">
+            <input type="hidden" id="deviceMetadataId">
+            <input type="hidden" id="deviceMetadataMemberId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Manufacturer</label>
+                <input type="text" id="deviceManufacturer" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Device Name</label>
+                <input type="text" id="deviceName" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Device Model</label>
+                <input type="text" id="deviceModel" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">ROM</label>
+                <input type="text" id="deviceRom" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Save
+                </button>
+                <button type="button" onclick="closeDeviceMetadataModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -350,6 +441,100 @@ function loadActiveSession(accountId) {
         `;
     });
 }
+
+// Device Metadata Management
+let currentDevices = [];
+
+function openAddDeviceMetadataModal() {
+    document.getElementById('deviceMetadataModalTitle').textContent = 'Add Device Metadata';
+    document.getElementById('deviceMetadataForm').reset();
+    document.getElementById('deviceMetadataId').value = '';
+    document.getElementById('deviceMetadataMemberId').value = '{{ $member->id }}';
+    document.getElementById('deviceMetadataModal').classList.remove('hidden');
+    document.getElementById('deviceMetadataModal').classList.add('flex');
+}
+
+function closeDeviceMetadataModal() {
+    document.getElementById('deviceMetadataModal').classList.add('hidden');
+    document.getElementById('deviceMetadataModal').classList.remove('flex');
+}
+
+function editDeviceMetadata(id) {
+    fetch(`/admin/members/{{ $member->id }}/device-metadata`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const device = data.devices.find(d => d.id == id);
+                if (!device) return;
+                
+                document.getElementById('deviceMetadataModalTitle').textContent = 'Edit Device Metadata';
+                document.getElementById('deviceMetadataId').value = device.id;
+                document.getElementById('deviceMetadataMemberId').value = device.member_id;
+                document.getElementById('deviceManufacturer').value = device.manufacturer || '';
+                document.getElementById('deviceName').value = device.device_name || '';
+                document.getElementById('deviceModel').value = device.device_model || '';
+                document.getElementById('deviceRom').value = device.rom || '';
+                document.getElementById('deviceMetadataModal').classList.remove('hidden');
+                document.getElementById('deviceMetadataModal').classList.add('flex');
+            }
+        });
+}
+
+function deleteDeviceMetadata(id) {
+    if (!confirm('Are you sure you want to delete this device metadata?')) return;
+
+    fetch(`/admin/device-metadata/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            location.reload(); // Reload page to refresh the list
+        } else {
+            showToast(data.message || 'Error deleting device metadata', 'error');
+        }
+    });
+}
+
+// Device Metadata Form Submission
+document.getElementById('deviceMetadataForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const id = document.getElementById('deviceMetadataId').value;
+    const url = id ? `/admin/device-metadata/${id}` : '/admin/device-metadata';
+    const method = id ? 'PUT' : 'POST';
+    const data = {
+        member_id: document.getElementById('deviceMetadataMemberId').value,
+        manufacturer: document.getElementById('deviceManufacturer').value || null,
+        device_name: document.getElementById('deviceName').value || null,
+        device_model: document.getElementById('deviceModel').value || null,
+        rom: document.getElementById('deviceRom').value || null,
+    };
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeDeviceMetadataModal();
+            location.reload(); // Reload page to refresh the list
+        } else {
+            showToast(data.message || 'Error saving device metadata', 'error');
+        }
+    });
+});
 </script>
 @endpush
 @endsection

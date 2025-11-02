@@ -10,6 +10,7 @@ use App\Models\LicensePlan;
 use App\Models\Niche;
 use App\Models\ProductSet;
 use App\Models\ProductSetItem;
+use App\Models\DeviceMetadata;
 use App\Services\ShopeeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -87,7 +88,7 @@ class DashboardController extends Controller
      */
     public function editMember(Member $member)
     {
-        $member->load(['subscriptions.app', 'shopeeAccounts']);
+        $member->load(['subscriptions.app', 'shopeeAccounts', 'deviceMetadata']);
         return view('admin.members.edit', compact('member'));
     }
 
@@ -928,6 +929,75 @@ class DashboardController extends Controller
             'success' => true,
             'livestreams' => $activeLivestreams,
             'total' => count($activeLivestreams)
+        ]);
+    }
+
+    /**
+     * Get all device metadata for a member
+     */
+    public function getMemberDeviceMetadata(Member $member)
+    {
+        $devices = $member->deviceMetadata()->orderBy('created_at', 'desc')->get();
+        
+        return response()->json([
+            'success' => true,
+            'devices' => $devices
+        ]);
+    }
+
+    /**
+     * Create a new device metadata
+     */
+    public function createDeviceMetadata(Request $request)
+    {
+        $validated = $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'manufacturer' => 'nullable|string|max:255',
+            'device_name' => 'nullable|string|max:255',
+            'device_model' => 'nullable|string|max:255',
+            'rom' => 'nullable|string|max:255',
+        ]);
+
+        $device = DeviceMetadata::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Device metadata created successfully',
+            'device' => $device
+        ]);
+    }
+
+    /**
+     * Update a device metadata
+     */
+    public function updateDeviceMetadata(Request $request, DeviceMetadata $deviceMetadata)
+    {
+        $validated = $request->validate([
+            'manufacturer' => 'nullable|string|max:255',
+            'device_name' => 'nullable|string|max:255',
+            'device_model' => 'nullable|string|max:255',
+            'rom' => 'nullable|string|max:255',
+        ]);
+
+        $deviceMetadata->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Device metadata updated successfully',
+            'device' => $deviceMetadata->fresh()
+        ]);
+    }
+
+    /**
+     * Delete a device metadata
+     */
+    public function deleteDeviceMetadata(DeviceMetadata $deviceMetadata)
+    {
+        $deviceMetadata->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Device metadata deleted successfully'
         ]);
     }
 }

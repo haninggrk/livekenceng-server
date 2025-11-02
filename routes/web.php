@@ -131,6 +131,12 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/product-sets/{productSet}/items/{item}', [DashboardController::class, 'deleteProductSetItem']);
     Route::delete('/product-sets/{productSet}/items', [DashboardController::class, 'clearProductSetItems']);
     Route::get('/product-sets/{productSet}/export', [DashboardController::class, 'exportProductSetToCSV']);
+    
+    // Device Metadata management routes (AJAX)
+    Route::get('/members/{member}/device-metadata', [DashboardController::class, 'getMemberDeviceMetadata']);
+    Route::post('/device-metadata', [DashboardController::class, 'createDeviceMetadata']);
+    Route::put('/device-metadata/{deviceMetadata}', [DashboardController::class, 'updateDeviceMetadata']);
+    Route::delete('/device-metadata/{deviceMetadata}', [DashboardController::class, 'deleteDeviceMetadata']);
 });
 
 // Reseller authentication routes

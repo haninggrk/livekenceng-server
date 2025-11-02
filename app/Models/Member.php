@@ -91,6 +91,14 @@ class Member extends Model
     }
 
     /**
+     * Device metadata owned by this member
+     */
+    public function deviceMetadata()
+    {
+        return $this->hasMany(DeviceMetadata::class);
+    }
+
+    /**
      * Check if member has active subscription for a specific app
      */
     public function hasActiveSubscriptionForApp($appId): bool

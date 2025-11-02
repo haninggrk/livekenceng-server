@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ShopeeAccountController;
 use App\Http\Controllers\Api\NicheController;
 use App\Http\Controllers\Api\ProductSetController;
 use App\Http\Controllers\Api\ShopeeLiveController;
+use App\Http\Controllers\Api\DeviceMetadataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +57,13 @@ Route::prefix('members')->group(function () {
     Route::post('/product-sets/{productSet}/items', [ProductSetController::class, 'addItems']);
     Route::delete('/product-sets/{productSet}/items/{item}', [ProductSetController::class, 'removeItem']);
     Route::delete('/product-sets/{productSet}/items', [ProductSetController::class, 'clearItems']);
+    
+    // Device Metadata
+    Route::get('/device-metadata', [DeviceMetadataController::class, 'index']);
+    Route::post('/device-metadata', [DeviceMetadataController::class, 'store']);
+    Route::get('/device-metadata/{deviceMetadata}', [DeviceMetadataController::class, 'show']);
+    Route::put('/device-metadata/{deviceMetadata}', [DeviceMetadataController::class, 'update']);
+    Route::delete('/device-metadata/{deviceMetadata}', [DeviceMetadataController::class, 'destroy']);
 });
 
 // Software update routes
