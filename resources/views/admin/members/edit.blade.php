@@ -91,7 +91,7 @@
                                     <h3 class="text-lg font-semibold text-gray-900">{{ $subscription->app->display_name ?? 'Unknown App' }}</h3>
                                     <p class="text-sm text-gray-500">{{ $subscription->app->identifier ?? 'N/A' }}</p>
                                 </div>
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $subscription->expiry_date && $subscription->expiry_date->isFuture() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                <span id="subscription-status-{{ $subscription->id }}" class="px-2 py-1 text-xs font-semibold rounded-full {{ $subscription->expiry_date && $subscription->expiry_date->isFuture() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $subscription->expiry_date && $subscription->expiry_date->isFuture() ? 'Active' : 'Expired' }}
                                 </span>
                             </div>
@@ -104,8 +104,11 @@
                                     <p id="machine-id-display-{{ $subscription->id }}" class="text-sm font-medium text-gray-900 font-mono">{{ $subscription->machine_id ? Str::limit($subscription->machine_id, 20) : '-' }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500">Expiry Date</p>
-                                    <p class="text-sm font-medium text-gray-900">{{ $subscription->expiry_date ? $subscription->expiry_date->format('Y-m-d H:i') : '-' }}</p>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <p class="text-xs text-gray-500">Expiry Date</p>
+                                        <button onclick="editSubscriptionExpiry({{ $subscription->id }}, '{{ addslashes($subscription->expiry_date ? $subscription->expiry_date->format('Y-m-d H:i') : '') }}')" class="text-primary-600 hover:text-primary-900 text-xs font-medium">Edit</button>
+                                    </div>
+                                    <p id="expiry-display-{{ $subscription->id }}" class="text-sm font-medium text-gray-900">{{ $subscription->expiry_date ? $subscription->expiry_date->format('Y-m-d H:i') : '-' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -429,6 +432,57 @@ function editMachineId(subscriptionId, currentMachineId, appIdentifier) {
     .catch(error => {
         console.error('Error:', error);
         showToast('Error updating machine ID', 'error');
+    });
+}
+
+function editSubscriptionExpiry(subscriptionId, currentExpiry) {
+    const promptMessage = 'Enter new expiry date (YYYY-MM-DD HH:MM). Leave empty to remove expiry.';
+    const newExpiry = prompt(promptMessage, currentExpiry || '');
+
+    if (newExpiry === null) {
+        return; // Cancelled
+    }
+
+    const payload = {
+        expiry_date: newExpiry.trim() === '' ? null : newExpiry.trim(),
+    };
+
+    fetch(`/admin/subscriptions/${subscriptionId}/expiry`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to update expiry');
+        }
+
+        const displayEl = document.getElementById(`expiry-display-${subscriptionId}`);
+        if (displayEl) {
+            displayEl.textContent = data.expiry_display || '-';
+        }
+
+        const statusEl = document.getElementById(`subscription-status-${subscriptionId}`);
+        if (statusEl) {
+            statusEl.textContent = data.is_active ? 'Active' : 'Expired';
+            statusEl.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            if (data.is_active) {
+                statusEl.classList.add('bg-green-100', 'text-green-800');
+            } else {
+                statusEl.classList.add('bg-red-100', 'text-red-800');
+            }
+        }
+
+        showToast(data.message || 'Subscription expiry updated', 'success');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast(error.message || 'Error updating expiry date', 'error');
     });
 }
 

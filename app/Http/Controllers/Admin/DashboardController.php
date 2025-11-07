@@ -11,12 +11,14 @@ use App\Models\Niche;
 use App\Models\ProductSet;
 use App\Models\ProductSetItem;
 use App\Models\DeviceMetadata;
+use App\Models\MemberSubscription;
 use App\Services\ShopeeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Response;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -929,6 +931,34 @@ class DashboardController extends Controller
             'success' => true,
             'livestreams' => $activeLivestreams,
             'total' => count($activeLivestreams)
+        ]);
+    }
+
+    /**
+     * Update subscription expiry date
+     */
+    public function updateSubscriptionExpiry(Request $request, MemberSubscription $subscription)
+    {
+        $validated = $request->validate([
+            'expiry_date' => 'nullable|date',
+        ]);
+
+        $expiryDate = $validated['expiry_date'] ?? null;
+
+        if ($expiryDate) {
+            $subscription->expiry_date = Carbon::parse($expiryDate);
+        } else {
+            $subscription->expiry_date = null;
+        }
+
+        $subscription->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subscription expiry updated successfully',
+            'expiry_date' => $subscription->expiry_date ? $subscription->expiry_date->toIso8601String() : null,
+            'expiry_display' => $subscription->expiry_date ? $subscription->expiry_date->timezone(config('app.timezone'))->format('Y-m-d H:i') : null,
+            'is_active' => $subscription->isActive(),
         ]);
     }
 

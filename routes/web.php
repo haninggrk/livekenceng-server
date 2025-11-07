@@ -132,6 +132,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/product-sets/{productSet}/items', [DashboardController::class, 'clearProductSetItems']);
     Route::get('/product-sets/{productSet}/export', [DashboardController::class, 'exportProductSetToCSV']);
     
+    // Subscription management
+    Route::put('/subscriptions/{subscription}/expiry', [DashboardController::class, 'updateSubscriptionExpiry']);
+
     // Device Metadata management routes (AJAX)
     Route::get('/members/{member}/device-metadata', [DashboardController::class, 'getMemberDeviceMetadata']);
     Route::post('/device-metadata', [DashboardController::class, 'createDeviceMetadata']);
