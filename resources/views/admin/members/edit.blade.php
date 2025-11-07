@@ -144,7 +144,17 @@
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <p class="text-xs text-gray-500 mb-1">Cookie</p>
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="text-xs text-gray-500">Cookie</p>
+                                    <button
+                                        type="button"
+                                        class="text-xs font-medium text-primary-600 hover:text-primary-900"
+                                        onclick="copyCookie(this)"
+                                        data-cookie="{{ e($account->cookie) }}"
+                                    >
+                                        📋 Copy Full Cookie
+                                    </button>
+                                </div>
                                 <p class="text-xs font-mono bg-gray-50 p-2 rounded border border-gray-200 break-all">{{ Str::limit($account->cookie, 150) }}</p>
                             </div>
                             <div class="mt-3" id="session-info-{{ $account->id }}">
@@ -341,6 +351,42 @@ function showToast(message, type = 'success') {
     setTimeout(() => {
         toast.classList.add('hidden');
     }, 3000);
+}
+
+function copyCookie(button) {
+    const cookie = button.dataset.cookie;
+
+    if (!cookie) {
+        showToast('Cookie is empty', 'error');
+        return;
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(cookie)
+            .then(() => {
+                showToast('Cookie copied to clipboard', 'success');
+            })
+            .catch(() => {
+                showToast('Failed to copy cookie', 'error');
+            });
+    } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = cookie;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+            document.execCommand('copy');
+            showToast('Cookie copied to clipboard', 'success');
+        } catch (err) {
+            showToast('Failed to copy cookie', 'error');
+        }
+
+        document.body.removeChild(textarea);
+    }
 }
 
 function editMachineId(subscriptionId, currentMachineId, appIdentifier) {
