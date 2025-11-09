@@ -580,8 +580,12 @@ class MemberController extends Controller
             ]);
         }
 
-        // Cache miss - fetch from database
-        $member = Member::where('email', $email)->first();
+        // Cache miss - fetch from database with eager loading to prevent N+1 queries
+        $member = Member::where('email', $email)
+            ->with(['subscriptions' => function ($query) {
+                $query->select('id', 'member_id', 'app_id', 'machine_id', 'expiry_date');
+            }])
+            ->first();
 
         if (!$member || !Hash::check($request->password, $member->password)) {
             return response()->json([
@@ -590,16 +594,18 @@ class MemberController extends Controller
             ], 401);
         }
 
-        // Check and update expired status
-        $member->checkAndUpdateExpiredStatus();
-
         // Get machine_id and expiry_date from livekenceng subscription for backward compatibility
         $machineId = $member->machine_id;
         $expiryDate = $member->expiry_date;
         
-        $defaultApp = \App\Models\App::where('identifier', 'livekenceng')->first();
+        // Cache the livekenceng app lookup (1 hour) to avoid repeated DB queries
+        $defaultApp = Cache::remember('app:livekenceng', 3600, function () {
+            return \App\Models\App::where('identifier', 'livekenceng')->first();
+        });
+        
         if ($defaultApp) {
-            $subscription = $member->getSubscriptionForApp($defaultApp->id);
+            // Use eager loaded subscriptions to avoid extra query
+            $subscription = $member->subscriptions->where('app_id', $defaultApp->id)->first();
             if ($subscription) {
                 $machineId = $subscription->machine_id ?? $member->machine_id;
                 $expiryDate = $subscription->expiry_date;
