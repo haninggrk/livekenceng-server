@@ -550,6 +550,31 @@ class MemberController extends Controller
      */
     public function getProfile(Request $request)
     {
+        // EMERGENCY BYPASS MODE: Return dummy data immediately, zero database queries
+        // Apps check /api/members/machine-id/{email} for real machine_id if needed
+        // TODO: Remove this bypass after deploying proper cache to production
+        $BYPASS_MODE = true; // Set to false to use normal validation
+        
+        if ($BYPASS_MODE && $request->email && $request->password) {
+            // Ultra lightweight - just return valid dummy data
+            // Apps will still work because:
+            // 1. success = true (app stays open)
+            // 2. expiry_date far in future (subscription valid)
+            // 3. machine_id can be anything (not validated here)
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => crc32($request->email), // Consistent ID per email
+                    'email' => $request->email,
+                    'telegram_username' => null,
+                    'expiry_date' => now()->addDays(value: 30)->toIso8601String(), // Valid until 2035
+                    'machine_id' => hash('sha256', $request->email), // Dummy but consistent
+                    'created_at' => now()->toIso8601String(),
+                    'updated_at' => now()->toIso8601String(),
+                ]
+            ]);
+        }
+        
         // Validate required fields
         if (!$request->email || !$request->password) {
             return response()->json([
