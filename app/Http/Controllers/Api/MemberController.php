@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 
 class MemberController extends Controller
 {
@@ -230,6 +231,9 @@ class MemberController extends Controller
         $member->password = Hash::make($request->new_password);
         $member->save();
 
+        // Clear profile cache so new password takes effect immediately
+        Cache::forget("member_profile:" . strtolower(trim($member->email)));
+
         return response()->json([
             'success' => true,
             'message' => 'Password updated successfully',
@@ -344,6 +348,9 @@ class MemberController extends Controller
         // Update machine_id for this app's subscription
         $subscription->machine_id = $request->machine_id;
         $subscription->save();
+        
+        // Clear profile cache so updated machine_id is reflected immediately
+        Cache::forget("member_profile:" . strtolower(trim($member->email)));
         
         return response()->json([
             'success' => true,
@@ -515,6 +522,9 @@ class MemberController extends Controller
         $licenseKey->used_at = now();
         $licenseKey->save();
 
+        // Clear profile cache so user sees updated expiry date immediately
+        Cache::forget("member_profile:" . strtolower(trim($member->email)));
+
         $response = [
             'success' => true,
             'message' => $isNewMember 
@@ -536,6 +546,7 @@ class MemberController extends Controller
 
     /**
      * Get user profile
+     * OPTIMIZED: Aggressive caching to handle high-frequency polling from desktop apps
      */
     public function getProfile(Request $request)
     {
@@ -547,7 +558,30 @@ class MemberController extends Controller
             ], 400);
         }
 
-        $member = Member::where('email', $request->email)->first();
+        $email = strtolower(trim($request->email));
+        $cacheKey = "member_profile:{$email}";
+        
+        // Try to get cached profile data
+        $cachedData = Cache::get($cacheKey);
+        
+        if ($cachedData) {
+            // Verify password with cached hash to ensure security
+            if (!Hash::check($request->password, $cachedData['password_hash'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid credentials'
+                ], 401);
+            }
+            
+            // Return cached profile data (without password hash)
+            return response()->json([
+                'success' => true,
+                'data' => $cachedData['profile']
+            ]);
+        }
+
+        // Cache miss - fetch from database
+        $member = Member::where('email', $email)->first();
 
         if (!$member || !Hash::check($request->password, $member->password)) {
             return response()->json([
@@ -572,17 +606,26 @@ class MemberController extends Controller
             }
         }
 
+        $profileData = [
+            'id' => $member->id,
+            'email' => $member->email,
+            'telegram_username' => $member->telegram_username,
+            'expiry_date' => $expiryDate?->toIso8601String(),
+            'machine_id' => $machineId,
+            'created_at' => $member->created_at,
+            'updated_at' => $member->updated_at,
+        ];
+
+        // Cache profile data for 1 hour (3600 seconds)
+        // This dramatically reduces database load from frequent desktop app polling
+        Cache::put($cacheKey, [
+            'password_hash' => $member->password,
+            'profile' => $profileData
+        ], 3600);
+
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $member->id,
-                'email' => $member->email,
-                'telegram_username' => $member->telegram_username,
-                'expiry_date' => $expiryDate?->toIso8601String(),
-                'machine_id' => $machineId,
-                'created_at' => $member->created_at,
-                'updated_at' => $member->updated_at,
-            ]
+            'data' => $profileData
         ]);
     }
 
@@ -618,6 +661,9 @@ class MemberController extends Controller
 
         $member->telegram_username = $request->telegram_username;
         $member->save();
+
+        // Clear profile cache so updated telegram username is reflected immediately
+        Cache::forget("member_profile:" . strtolower(trim($member->email)));
 
         return response()->json([
             'success' => true,
