@@ -549,6 +549,24 @@
             Only expired subscriptions currently loaded in the table are shown here. Update the machine IDs you need and click Save.
         </p>
         <form id="bulkMachineIdForm">
+            <div class="bg-primary-50 border border-primary-100 rounded-xl p-4 mb-6">
+                <label class="block text-sm font-semibold text-primary-900 mb-2">
+                    Apply one machine ID value for all rows
+                </label>
+                <div class="flex flex-col gap-3 sm:flex-row">
+                    <input type="text"
+                        id="bulkMachineIdAllInput"
+                        class="flex-1 px-3 py-2 border border-primary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                        placeholder="Enter machine ID to use for every expired subscription">
+                    <button type="button"
+                        onclick="applyBulkMachineIdValue()"
+                        class="sm:w-40 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Apply to All
+                    </button>
+                </div>
+                <p class="text-xs text-primary-700 mt-2">Leave empty if you prefer editing machine IDs row-by-row.</p>
+            </div>
+
             <div id="bulkMachineIdEmptyState" class="text-center py-8 text-gray-500 hidden">
                 No expired subscriptions available. Refresh the list first.
             </div>
@@ -1095,6 +1113,10 @@
         }
 
         populateBulkMachineIdTable();
+        const masterInput = document.getElementById('bulkMachineIdAllInput');
+        if (masterInput) {
+            masterInput.value = '';
+        }
         document.getElementById('bulkMachineIdModal').classList.remove('hidden');
         document.getElementById('bulkMachineIdModal').classList.add('flex');
     }
@@ -1151,6 +1173,18 @@
 
             tbody.appendChild(row);
         });
+    }
+
+    function applyBulkMachineIdValue() {
+        const masterInput = document.getElementById('bulkMachineIdAllInput');
+        if (!masterInput) {
+            return;
+        }
+        const value = masterInput.value || '';
+        document.querySelectorAll('#bulkMachineIdTableBody input').forEach(input => {
+            input.value = value;
+        });
+        showToast('Value applied to all rows', 'success');
     }
 
     // Niches & Product Sets Management
@@ -2739,23 +2773,33 @@
             return;
         }
 
-        const updates = [];
-        rows.forEach(row => {
-            const subscriptionId = Number(row.dataset.subscriptionId);
-            const input = row.querySelector('input');
-            if (!input) {
-                return;
-            }
-            const value = input.value.trim();
-            const original = input.dataset.original || '';
-            if (value === original) {
-                return;
-            }
-            updates.push({
-                subscription_id: subscriptionId,
-                machine_id: value || null,
+        const masterInput = document.getElementById('bulkMachineIdAllInput');
+        const masterValue = masterInput ? masterInput.value.trim() : '';
+        let updates = [];
+
+        if (masterValue !== '') {
+            updates = filteredExpiredSubscriptions.map(sub => ({
+                subscription_id: Number(sub.id),
+                machine_id: masterValue,
+            }));
+        } else {
+            rows.forEach(row => {
+                const subscriptionId = Number(row.dataset.subscriptionId);
+                const input = row.querySelector('input');
+                if (!input) {
+                    return;
+                }
+                const value = input.value.trim();
+                const original = input.dataset.original || '';
+                if (value === original) {
+                    return;
+                }
+                updates.push({
+                    subscription_id: subscriptionId,
+                    machine_id: value || null,
+                });
             });
-        });
+        }
 
         if (!updates.length) {
             showToast('No changes detected', 'error');
