@@ -94,6 +94,9 @@
                     <button onclick="switchTab('niches')" id="tab-niches" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Niches & Product Sets
                     </button>
+                    <button onclick="switchTab('expired-subscriptions')" id="tab-expired-subscriptions" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Expired Subscriptions
+                    </button>
                     <button onclick="switchTab('active-livestream')" id="tab-active-livestream" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Active Livestream
                     </button>
@@ -166,7 +169,7 @@
                     </thead>
                     <tbody id="membersTableBody" class="bg-white divide-y divide-gray-200">
                         <!-- Members will be loaded dynamically via JavaScript -->
-                    </tbody>
+                        </tbody>
                     </table>
                 </div>
                 
@@ -182,13 +185,13 @@
                     <h2 class="text-2xl font-bold text-gray-900">License Key Management</h2>
                     <button onclick="openGenerateLicenseModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
                         + Generate License
-                    </button>
+                                </button>
                 </div>
 
                 <div id="licensesContent" class="space-y-8">
                     <p class="text-gray-600">Loading licenses...</p>
-                </div>
             </div>
+        </div>
 
             <!-- Resellers Tab -->
             <div id="content-resellers" class="tab-content p-6 hidden">
@@ -285,7 +288,7 @@
                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                             <button onclick="loadNichesForMember()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
                                 Load
-                            </button>
+                    </button>
                         </div>
                         <div id="selectedMemberInfo" class="mt-3 text-sm text-gray-600 hidden"></div>
                     </div>
@@ -298,7 +301,7 @@
                         <button onclick="openAddNicheModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             + Add Niche
                         </button>
-                    </div>
+                        </div>
 
                     <div id="nichesList" class="space-y-4 mb-8">
                         <!-- Niches will be loaded here -->
@@ -315,6 +318,46 @@
                 </div>
             </div>
 
+            <!-- Expired Subscriptions Tab -->
+            <div id="content-expired-subscriptions" class="tab-content p-6 hidden">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Expired Subscriptions</h2>
+                        <p class="text-gray-600 mt-1">Review expired members, edit their machine IDs, and follow up easily.</p>
+                    </div>
+                    <button onclick="loadExpiredSubscriptions()" class="self-start bg-primary-500 hover:bg-primary-600 text-white px-5 py-2 rounded-lg font-medium transition-colors">
+                        🔄 Refresh List
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" id="expiredSearch" placeholder="Search by email, Telegram username, or app name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-2">Showing <span id="expiredCount">0</span> expired subscriptions.</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">App</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expired Since</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Machine ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expiredSubscriptionsBody" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                    Click "Refresh List" to load expired subscriptions.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Active Livestream Tab -->
             <div id="content-active-livestream" class="tab-content p-6 hidden">
                 <div class="mb-6">
@@ -325,30 +368,30 @@
                     </button>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Live Link</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GMV</th>
-                            </tr>
-                        </thead>
+                                        </tr>
+                                    </thead>
                         <tbody id="activeLivestreamsTableBody" class="bg-white divide-y divide-gray-200">
                             <tr>
                                 <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                                     Click "Refresh List" to load active livestreams
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
+                                    </tbody>
+                                </table>
                 </div>
             </div>
 
-        </div>
-    </div>
-</div>
+                            </div>
+                        </div>
+                    </div>
 
 <!-- Add/Edit Niche Modal -->
 <div id="nicheModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
@@ -361,12 +404,12 @@
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
                 <input type="text" id="nicheName" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
+                        </div>
 
             <div class="mb-6">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                 <textarea id="nicheDescription" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"></textarea>
-            </div>
+                                    </div>
 
             <div class="flex space-x-3">
                 <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
@@ -375,10 +418,10 @@
                 <button type="button" onclick="closeNicheModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
                     Cancel
                 </button>
-            </div>
+                                    </div>
         </form>
-    </div>
-</div>
+                                </div>
+                                </div>
 
 <!-- Add/Edit Product Set Modal -->
 <div id="productSetModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
@@ -391,14 +434,14 @@
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
                 <input type="text" id="productSetName" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>
+                            </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Niche</label>
                 <select id="productSetNicheId" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                     <option value="">No Niche</option>
                 </select>
-            </div>
+                        </div>
 
             <div class="mb-6">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
@@ -414,8 +457,8 @@
                 </button>
             </div>
         </form>
-    </div>
-</div>
+                    </div>
+                </div>
 
 <!-- Add Items to Product Set Modal -->
 <div id="productSetItemsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
@@ -428,19 +471,19 @@
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Product URLs (one per line)</label>
                 <textarea id="productUrls" rows="10" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm" placeholder="https://shopee.co.id/product/123/456&#10;https://shopee.co.id/product/789/012"></textarea>
                 <p class="text-xs text-gray-500 mt-1">Enter one URL per line. Max 100 items per product set.</p>
-            </div>
+                    </div>
 
             <div class="flex space-x-3">
                 <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
                     Add Items
-                </button>
+                        </button>
                 <button type="button" onclick="closeProductSetItemsModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
                     Cancel
                 </button>
-            </div>
+                        </div>
         </form>
-    </div>
-</div>
+                    </div>
+                </div>
 
 <!-- Add/Edit App Modal -->
 <div id="appModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
@@ -458,7 +501,7 @@
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Display Name</label>
                 <input type="text" id="appDisplayName" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="e.g., Shopee Automation App">
-            </div>
+        </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Identifier</label>
@@ -688,6 +731,37 @@
 @push('scripts')
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    let expiredSubscriptions = [];
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function formatDateTime(value) {
+        if (!value) {
+            return '-';
+        }
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+        return date.toLocaleString('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
 
     // Tab switching
     function switchTab(tab) {
@@ -724,6 +798,8 @@
             document.getElementById('selectedMemberInfo').classList.add('hidden');
             document.getElementById('nichesSection').classList.add('hidden');
             document.getElementById('nichesEmptyState').classList.remove('hidden');
+        } else if (tab === 'expired-subscriptions') {
+            loadExpiredSubscriptions();
         } else if (tab === 'active-livestream') {
             // Load active livestreams when tab is opened
             loadActiveLivestreams();
@@ -803,6 +879,164 @@
                 </td>
             `;
             tbody.appendChild(row);
+        });
+    }
+
+    // Expired subscriptions
+    function loadExpiredSubscriptions() {
+        const tbody = document.getElementById('expiredSubscriptionsBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    ⏳ Loading expired subscriptions...
+                </td>
+            </tr>
+        `;
+
+        fetch('/admin/subscriptions/expired')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    expiredSubscriptions = data.subscriptions || [];
+                    document.getElementById('expiredCount').textContent = data.total || expiredSubscriptions.length;
+                    renderExpiredSubscriptions();
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-red-600">
+                                ${data.message || 'Failed to load expired subscriptions'}
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading expired subscriptions:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-red-600">
+                            Error loading expired subscriptions
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function renderExpiredSubscriptions() {
+        const tbody = document.getElementById('expiredSubscriptionsBody');
+        if (!tbody) return;
+
+        const searchInput = document.getElementById('expiredSearch');
+        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+        const filtered = expiredSubscriptions.filter(sub => {
+            if (!keyword) return true;
+            const email = sub.member?.email?.toLowerCase() || '';
+            const telegram = sub.member?.telegram_username?.toLowerCase() || '';
+            const appName = sub.app?.display_name?.toLowerCase() || '';
+            const appIdentifier = sub.app?.identifier?.toLowerCase() || '';
+            const machineId = sub.machine_id?.toLowerCase() || '';
+            return email.includes(keyword) ||
+                telegram.includes(keyword) ||
+                appName.includes(keyword) ||
+                appIdentifier.includes(keyword) ||
+                machineId.includes(keyword);
+        });
+
+        const summary = document.getElementById('expiredCount');
+        if (summary) {
+            summary.textContent = filtered.length;
+        }
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        No expired subscriptions match your search.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        filtered.forEach(sub => {
+            const row = document.createElement('tr');
+            const subscriptionId = Number(sub.id);
+            const email = sub.member?.email || 'Unknown';
+            const telegram = sub.member?.telegram_username;
+            const appLabel = sub.app
+                ? `${sub.app.display_name} (${sub.app.identifier})`
+                : 'Livekenceng (Legacy)';
+            const expiryDisplay = formatDateTime(sub.expiry_date);
+            const expiredDays = typeof sub.expired_days === 'number' ? sub.expired_days : null;
+            const expiredText = expiredDays !== null ? `${expiredDays} day${expiredDays === 1 ? '' : 's'} ago` : '-';
+            const machineId = sub.machine_id;
+            const machineIdDisplay = machineId
+                ? `<code class="text-xs bg-gray-100 px-2 py-1 rounded">${escapeHtml(machineId)}</code>`
+                : '<span class="text-xs text-gray-500">Not set</span>';
+
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(email)}</div>
+                    ${telegram ? `<div class="text-xs text-gray-500">@${escapeHtml(telegram)}</div>` : ''}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${escapeHtml(appLabel)}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    <div>${expiryDisplay}</div>
+                    <div class="text-xs text-gray-500">${expiredText}</div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    ${machineIdDisplay}
+                </td>
+                <td class="px-6 py-4 text-sm font-medium space-x-3 whitespace-nowrap">
+                    <button onclick="editSubscriptionMachineId(${subscriptionId}, ${JSON.stringify(machineId || '')})" class="text-primary-600 hover:text-primary-900">
+                        Edit Machine ID
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function editSubscriptionMachineId(subscriptionId, currentValue = '') {
+        const newValue = prompt('Enter new machine ID (leave empty to clear):', currentValue || '');
+        if (newValue === null) {
+            return;
+        }
+
+        fetch(`/admin/subscriptions/${subscriptionId}/machine-id`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                machine_id: newValue.trim() ? newValue.trim() : null,
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                const target = expiredSubscriptions.find(sub => Number(sub.id) === Number(subscriptionId));
+                if (target) {
+                    target.machine_id = data.machine_id;
+                    renderExpiredSubscriptions();
+                }
+            } else {
+                showToast(data.message || 'Failed to update machine ID', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating machine ID:', error);
+            showToast('Failed to update machine ID', 'error');
         });
     }
 
@@ -2235,7 +2469,7 @@
         
         fetch(`/admin/apps/${id}`, {
             method: 'DELETE',
-            headers: {
+                    headers: {
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             }
@@ -2260,8 +2494,8 @@
             }
         })
         .then(res => res.json())
-        .then(data => {
-            if (data.success) {
+            .then(data => {
+                if (data.success) {
                 showToast(data.message, 'success');
                 loadApps();
             } else {
@@ -2285,7 +2519,7 @@
         
         fetch(url, {
             method: method,
-            headers: {
+                headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
@@ -2293,14 +2527,14 @@
             body: JSON.stringify(data)
         })
         .then(res => res.json())
-        .then(data => {
-            if (data.success) {
+            .then(data => {
+                if (data.success) {
                 showToast(data.message, 'success');
                 closeAppModal();
                 loadApps();
             } else if (data.errors) {
                 alert(Object.values(data.errors).flat().join('\n'));
-            } else {
+                } else {
                 showToast(data.message || 'Error saving app', 'error');
             }
         });
@@ -2333,6 +2567,11 @@
                 const appId = this.value || null;
                 loadPlansForApp(appId);
             });
+        }
+
+        const expiredSearchInput = document.getElementById('expiredSearch');
+        if (expiredSearchInput) {
+            expiredSearchInput.addEventListener('input', debounce(renderExpiredSubscriptions, 300));
         }
     });
 

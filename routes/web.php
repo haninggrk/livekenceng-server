@@ -133,7 +133,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/product-sets/{productSet}/export', [DashboardController::class, 'exportProductSetToCSV']);
     
     // Subscription management
+    Route::get('/subscriptions/expired', [DashboardController::class, 'getExpiredSubscriptions']);
     Route::put('/subscriptions/{subscription}/expiry', [DashboardController::class, 'updateSubscriptionExpiry']);
+    Route::put('/subscriptions/{subscription}/machine-id', [DashboardController::class, 'updateSubscriptionMachineId']);
 
     // Device Metadata management routes (AJAX)
     Route::get('/members/{member}/device-metadata', [DashboardController::class, 'getMemberDeviceMetadata']);

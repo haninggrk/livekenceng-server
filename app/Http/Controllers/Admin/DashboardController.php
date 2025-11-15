@@ -963,6 +963,79 @@ class DashboardController extends Controller
     }
 
     /**
+     * Update subscription machine ID
+     */
+    public function updateSubscriptionMachineId(Request $request, MemberSubscription $subscription)
+    {
+        $validated = $request->validate([
+            'machine_id' => 'nullable|string|max:255',
+        ]);
+
+        $subscription->machine_id = $validated['machine_id'] ?: null;
+        $subscription->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subscription machine ID updated successfully',
+            'machine_id' => $subscription->machine_id,
+        ]);
+    }
+
+    /**
+     * List expired subscriptions for follow-up
+     */
+    public function getExpiredSubscriptions(Request $request)
+    {
+        $query = MemberSubscription::with([
+            'member:id,email,telegram_username',
+            'app:id,display_name,identifier',
+        ])
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '<', Carbon::now());
+
+        if ($search = trim((string) $request->get('search'))) {
+            $query->whereHas('member', function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                    ->orWhere('telegram_username', 'like', "%{$search}%");
+            });
+        }
+
+        if ($appIdentifier = $request->get('app_identifier')) {
+            $query->whereHas('app', function ($q) use ($appIdentifier) {
+                $q->where('identifier', $appIdentifier);
+            });
+        }
+
+        $subscriptions = $query
+            ->orderBy('expiry_date', 'asc')
+            ->get()
+            ->map(function (MemberSubscription $subscription) {
+                return [
+                    'id' => $subscription->id,
+                    'member' => $subscription->member ? [
+                        'id' => $subscription->member->id,
+                        'email' => $subscription->member->email,
+                        'telegram_username' => $subscription->member->telegram_username,
+                    ] : null,
+                    'app' => $subscription->app ? [
+                        'id' => $subscription->app->id,
+                        'identifier' => $subscription->app->identifier,
+                        'display_name' => $subscription->app->display_name,
+                    ] : null,
+                    'machine_id' => $subscription->machine_id,
+                    'expiry_date' => $subscription->expiry_date?->toIso8601String(),
+                    'expired_days' => $subscription->expiry_date ? $subscription->expiry_date->diffInDays(Carbon::now()) : null,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'subscriptions' => $subscriptions,
+            'total' => $subscriptions->count(),
+        ]);
+    }
+
+    /**
      * Get all device metadata for a member
      */
     public function getMemberDeviceMetadata(Member $member)
