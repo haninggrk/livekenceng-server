@@ -995,7 +995,7 @@
                     ${machineIdDisplay}
                 </td>
                 <td class="px-6 py-4 text-sm font-medium space-x-3 whitespace-nowrap">
-                    <button onclick="editSubscriptionMachineId(${subscriptionId}, ${JSON.stringify(machineId || '')})" class="text-primary-600 hover:text-primary-900">
+                    <button onclick="editSubscriptionMachineId(${subscriptionId})" class="text-primary-600 hover:text-primary-900">
                         Edit Machine ID
                     </button>
                 </td>
@@ -1004,8 +1004,10 @@
         });
     }
 
-    function editSubscriptionMachineId(subscriptionId, currentValue = '') {
-        const newValue = prompt('Enter new machine ID (leave empty to clear):', currentValue || '');
+    function editSubscriptionMachineId(subscriptionId) {
+        const target = expiredSubscriptions.find(sub => Number(sub.id) === Number(subscriptionId));
+        const currentValue = target?.machine_id || '';
+        const newValue = prompt('Enter new machine ID (leave empty to clear):', currentValue);
         if (newValue === null) {
             return;
         }
@@ -1025,11 +1027,10 @@
         .then(data => {
             if (data.success) {
                 showToast(data.message, 'success');
-                const target = expiredSubscriptions.find(sub => Number(sub.id) === Number(subscriptionId));
                 if (target) {
                     target.machine_id = data.machine_id;
-                    renderExpiredSubscriptions();
                 }
+                renderExpiredSubscriptions();
             } else {
                 showToast(data.message || 'Failed to update machine ID', 'error');
             }
