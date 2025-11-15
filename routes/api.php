@@ -22,7 +22,7 @@ Route::prefix('members')->group(function () {
     Route::post('/change-password', [MemberController::class, 'changePassword']);
     
     // Profile management
-    Route::post('/profile', [MemberController::class, 'getProfile']);
+    Route::post('/profile', [MemberController::class, 'getProfile'])->middleware('log.profile');
     Route::put('/telegram', [MemberController::class, 'updateTelegram']);
     
     // Settings
