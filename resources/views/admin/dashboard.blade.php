@@ -325,9 +325,14 @@
                         <h2 class="text-2xl font-bold text-gray-900">Expired Subscriptions</h2>
                         <p class="text-gray-600 mt-1">Review expired members, edit their machine IDs, and follow up easily.</p>
                     </div>
-                    <button onclick="loadExpiredSubscriptions()" class="self-start bg-primary-500 hover:bg-primary-600 text-white px-5 py-2 rounded-lg font-medium transition-colors">
-                        🔄 Refresh List
-                    </button>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="loadExpiredSubscriptions()" class="bg-primary-100 text-primary-700 hover:bg-primary-200 px-5 py-2 rounded-lg font-medium transition-colors">
+                            🔄 Refresh List
+                        </button>
+                        <button onclick="openBulkMachineIdModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-5 py-2 rounded-lg font-medium transition-colors">
+                            ✏️ Bulk Edit Machine IDs
+                        </button>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
@@ -533,6 +538,46 @@
     </div>
 </div>
 
+<!-- Bulk Machine ID Modal -->
+<div id="bulkMachineIdModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-gray-900">Bulk Edit Machine IDs</h3>
+            <button onclick="closeBulkMachineIdModal()" class="text-gray-500 hover:text-gray-700 text-sm">✕ Close</button>
+        </div>
+        <p class="text-sm text-gray-600 mb-6">
+            Only expired subscriptions currently loaded in the table are shown here. Update the machine IDs you need and click Save.
+        </p>
+        <form id="bulkMachineIdForm">
+            <div id="bulkMachineIdEmptyState" class="text-center py-8 text-gray-500 hidden">
+                No expired subscriptions available. Refresh the list first.
+            </div>
+            <div id="bulkMachineIdTableWrapper" class="overflow-x-auto border border-gray-200 rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">App</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Machine ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New Machine ID</th>
+                                    </tr>
+                                </thead>
+                    <tbody id="bulkMachineIdTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:gap-4 mt-6">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                    Save Changes
+                </button>
+                <button type="button" onclick="closeBulkMachineIdModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+                    </div>
+        </form>
+    </div>
+</div>
+
 <!-- Add/Edit Member Modal -->
 <div id="memberModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
@@ -732,6 +777,7 @@
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     let expiredSubscriptions = [];
+    let filteredExpiredSubscriptions = [];
 
     function escapeHtml(value) {
         if (value === null || value === undefined) {
@@ -931,7 +977,7 @@
         const searchInput = document.getElementById('expiredSearch');
         const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-        const filtered = expiredSubscriptions.filter(sub => {
+        filteredExpiredSubscriptions = expiredSubscriptions.filter(sub => {
             if (!keyword) return true;
             const email = sub.member?.email?.toLowerCase() || '';
             const telegram = sub.member?.telegram_username?.toLowerCase() || '';
@@ -947,10 +993,10 @@
 
         const summary = document.getElementById('expiredCount');
         if (summary) {
-            summary.textContent = filtered.length;
+            summary.textContent = filteredExpiredSubscriptions.length;
         }
 
-        if (filtered.length === 0) {
+        if (filteredExpiredSubscriptions.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="5" class="px-6 py-8 text-center text-gray-500">
@@ -963,7 +1009,7 @@
 
         tbody.innerHTML = '';
 
-        filtered.forEach(sub => {
+        filteredExpiredSubscriptions.forEach(sub => {
             const row = document.createElement('tr');
             const subscriptionId = Number(sub.id);
             const email = sub.member?.email || 'Unknown';
@@ -1038,6 +1084,72 @@
         .catch(error => {
             console.error('Error updating machine ID:', error);
             showToast('Failed to update machine ID', 'error');
+        });
+    }
+
+    function openBulkMachineIdModal() {
+        if (!expiredSubscriptions.length) {
+            loadExpiredSubscriptions();
+            showToast('Loading expired subscriptions first...', 'success');
+            return;
+        }
+
+        populateBulkMachineIdTable();
+        document.getElementById('bulkMachineIdModal').classList.remove('hidden');
+        document.getElementById('bulkMachineIdModal').classList.add('flex');
+    }
+
+    function closeBulkMachineIdModal() {
+        document.getElementById('bulkMachineIdModal').classList.add('hidden');
+        document.getElementById('bulkMachineIdModal').classList.remove('flex');
+    }
+
+    function populateBulkMachineIdTable() {
+        const tbody = document.getElementById('bulkMachineIdTableBody');
+        const emptyState = document.getElementById('bulkMachineIdEmptyState');
+        const wrapper = document.getElementById('bulkMachineIdTableWrapper');
+
+        if (!filteredExpiredSubscriptions.length) {
+            emptyState.classList.remove('hidden');
+            wrapper.classList.add('hidden');
+            tbody.innerHTML = '';
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+        wrapper.classList.remove('hidden');
+        tbody.innerHTML = '';
+
+        filteredExpiredSubscriptions.forEach(sub => {
+            const row = document.createElement('tr');
+            row.dataset.subscriptionId = sub.id;
+            const email = sub.member?.email || 'Unknown';
+            const appLabel = sub.app
+                ? `${sub.app.display_name} (${sub.app.identifier})`
+                : 'Livekenceng (Legacy)';
+            const currentMachineId = sub.machine_id || '';
+
+            row.innerHTML = `
+                <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(email)}</div>
+                    ${sub.member?.telegram_username ? `<div class="text-xs text-gray-500">@${escapeHtml(sub.member.telegram_username)}</div>` : ''}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-900">${escapeHtml(appLabel)}</td>
+                <td class="px-4 py-3 text-sm">
+                    ${currentMachineId
+                        ? `<code class="text-xs bg-gray-100 px-2 py-1 rounded break-all">${escapeHtml(currentMachineId)}</code>`
+                        : '<span class="text-xs text-gray-500">Not set</span>'}
+                </td>
+                <td class="px-4 py-3">
+                    <input type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                        value="${escapeHtml(currentMachineId)}"
+                        data-original="${escapeHtml(currentMachineId)}"
+                        placeholder="New machine ID">
+                </td>
+            `;
+
+            tbody.appendChild(row);
         });
     }
 
@@ -2574,6 +2686,11 @@
         if (expiredSearchInput) {
             expiredSearchInput.addEventListener('input', debounce(renderExpiredSubscriptions, 300));
         }
+
+        const bulkMachineIdForm = document.getElementById('bulkMachineIdForm');
+        if (bulkMachineIdForm) {
+            bulkMachineIdForm.addEventListener('submit', handleBulkMachineIdSubmit);
+        }
     });
 
     // Toast notification function
@@ -2612,6 +2729,70 @@
         setTimeout(() => {
             toast.classList.add('hidden');
         }, 3000);
+    }
+
+    function handleBulkMachineIdSubmit(event) {
+        event.preventDefault();
+        const rows = document.querySelectorAll('#bulkMachineIdTableBody tr');
+        if (!rows.length) {
+            showToast('No subscriptions to update', 'error');
+            return;
+        }
+
+        const updates = [];
+        rows.forEach(row => {
+            const subscriptionId = Number(row.dataset.subscriptionId);
+            const input = row.querySelector('input');
+            if (!input) {
+                return;
+            }
+            const value = input.value.trim();
+            const original = input.dataset.original || '';
+            if (value === original) {
+                return;
+            }
+            updates.push({
+                subscription_id: subscriptionId,
+                machine_id: value || null,
+            });
+        });
+
+        if (!updates.length) {
+            showToast('No changes detected', 'error');
+            return;
+        }
+
+        fetch('/admin/subscriptions/expired/machine-ids', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ updates })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    data.results.forEach(result => {
+                        if (result.status === 'updated') {
+                            const target = expiredSubscriptions.find(sub => Number(sub.id) === Number(result.subscription_id));
+                            if (target) {
+                                target.machine_id = result.machine_id;
+                            }
+                        }
+                    });
+                    renderExpiredSubscriptions();
+                    populateBulkMachineIdTable();
+                } else {
+                    showToast(data.message || 'Failed to update machine IDs', 'error');
+        }
+            })
+            .catch(error => {
+                console.error('Error updating machine IDs:', error);
+                showToast('Failed to update machine IDs', 'error');
+            });
     }
 
     </script>

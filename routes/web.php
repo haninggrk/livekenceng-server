@@ -136,6 +136,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/subscriptions/expired', [DashboardController::class, 'getExpiredSubscriptions']);
     Route::put('/subscriptions/{subscription}/expiry', [DashboardController::class, 'updateSubscriptionExpiry']);
     Route::put('/subscriptions/{subscription}/machine-id', [DashboardController::class, 'updateSubscriptionMachineId']);
+    Route::post('/subscriptions/expired/machine-ids', [DashboardController::class, 'bulkUpdateSubscriptionMachineIds']);
 
     // Device Metadata management routes (AJAX)
     Route::get('/members/{member}/device-metadata', [DashboardController::class, 'getMemberDeviceMetadata']);

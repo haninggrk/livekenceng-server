@@ -982,6 +982,68 @@ class DashboardController extends Controller
     }
 
     /**
+     * Bulk update machine IDs for expired subscriptions
+     */
+    public function bulkUpdateSubscriptionMachineIds(Request $request)
+    {
+        $validated = $request->validate([
+            'updates' => 'required|array|min:1',
+            'updates.*.subscription_id' => 'required|integer|exists:member_subscriptions,id',
+            'updates.*.machine_id' => 'nullable|string|max:255',
+        ]);
+
+        $updates = collect($validated['updates'])
+            ->unique(fn ($item) => $item['subscription_id'])
+            ->values();
+
+        $subscriptions = MemberSubscription::with('member')
+            ->whereIn('id', $updates->pluck('subscription_id'))
+            ->get()
+            ->keyBy('id');
+
+        $results = [];
+        $successCount = 0;
+
+        foreach ($updates as $update) {
+            $subscription = $subscriptions->get($update['subscription_id']);
+
+            if (!$subscription) {
+                $results[] = [
+                    'subscription_id' => $update['subscription_id'],
+                    'status' => 'not_found',
+                    'message' => 'Subscription not found',
+                ];
+                continue;
+            }
+
+            if (!$subscription->expiry_date || $subscription->expiry_date->isFuture()) {
+                $results[] = [
+                    'subscription_id' => $subscription->id,
+                    'status' => 'skipped',
+                    'message' => 'Subscription is not expired',
+                ];
+                continue;
+            }
+
+            $subscription->machine_id = $update['machine_id'] ?? null;
+            $subscription->save();
+
+            $successCount++;
+            $results[] = [
+                'subscription_id' => $subscription->id,
+                'status' => 'updated',
+                'machine_id' => $subscription->machine_id,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$successCount} machine ID(s) updated",
+            'results' => $results,
+        ]);
+    }
+
+    /**
      * List expired subscriptions for follow-up
      */
     public function getExpiredSubscriptions(Request $request)
