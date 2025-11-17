@@ -15,7 +15,7 @@ class ShopeeService
      */
     public function randomClientInfo(): string
     {
-        devicesModel = ['iPhone13,1', 'iPhone13,2', 'iPhone13,3', 'iPhone13,4', 'iPhone13,5', 'iPhone13,6', 'iPhone13,7', 'iPhone13,8', 'iPhone13,9', 'iPhone13,10'];
+        $devicesModel = ['iPhone13,1', 'iPhone13,2', 'iPhone13,3', 'iPhone13,4', 'iPhone13,5', 'iPhone13,6', 'iPhone13,7', 'iPhone13,8', 'iPhone13,9', 'iPhone13,10'];
         //7A7903CD8CE8463FBBA8753FB76578B6 MUST LIKE THIS
         $deviceId = '7A7903CD8CE8463FBBA8753FB76578B6';
         //randomize the order of the deviceId
