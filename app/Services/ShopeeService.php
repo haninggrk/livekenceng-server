@@ -13,7 +13,17 @@ class ShopeeService
      * @param string $cookie Shopee account cookie
      * @return array Array of session IDs
      */
-    public function getSessionIds(string $cookie): array
+    public function randomClientInfo(): string
+    {
+        devicesModel = ['iPhone13,1', 'iPhone13,2', 'iPhone13,3', 'iPhone13,4', 'iPhone13,5', 'iPhone13,6', 'iPhone13,7', 'iPhone13,8', 'iPhone13,9', 'iPhone13,10'];
+        //7A7903CD8CE8463FBBA8753FB76578B6 MUST LIKE THIS
+        $deviceId = '7A7903CD8CE8463FBBA8753FB76578B6';
+        //randomize the order of the deviceId
+        $deviceId = str_shuffle($deviceId);
+        $randomDeviceModel = $devicesModel[array_rand($devicesModel)];
+        return "device_id={$deviceId};device_model={$randomDeviceModel};os=1;os_version=18.5;client_version=35626;platform=4;app_type=1;language=id;";
+    }
+     public function getSessionIds(string $cookie): array
     {
         try {
             $response = Http::withHeaders([
@@ -154,6 +164,7 @@ class ShopeeService
                 'accept-encoding' => 'gzip, deflate, br',
                 'accept-language' => 'id-ID,id,en-US,en',
                 'content-type' => 'application/json',
+                'client-info' => $this->randomClientInfo(),
                 'Cookie' => $cookie,
                 'user-agent' => 'language=id app_type=1 platform=native_ios appver=35945 os_ver=18.6.2 Cronet/102.0.5005.61',
                 'x-livestreaming-source' => 'shopee',
