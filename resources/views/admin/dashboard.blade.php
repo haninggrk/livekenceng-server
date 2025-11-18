@@ -329,6 +329,9 @@
                         <button onclick="loadExpiredSubscriptions()" class="bg-primary-100 text-primary-700 hover:bg-primary-200 px-5 py-2 rounded-lg font-medium transition-colors">
                             🔄 Refresh List
                         </button>
+                        <button onclick="exportExpiredSubscriptionsCsv()" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg font-medium transition-colors">
+                            📥 Export CSV
+                        </button>
                         <button onclick="openBulkMachineIdModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-5 py-2 rounded-lg font-medium transition-colors">
                             ✏️ Bulk Edit Machine IDs
                         </button>
@@ -348,13 +351,14 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">App</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expired Since</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Keys</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Machine ID</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="expiredSubscriptionsBody" class="bg-white divide-y divide-gray-200">
                             <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                     Click "Refresh List" to load expired subscriptions.
                                 </td>
                             </tr>
@@ -1017,7 +1021,7 @@
         if (filteredExpiredSubscriptions.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                         No expired subscriptions match your search.
                     </td>
                 </tr>
@@ -1042,6 +1046,16 @@
             const machineIdDisplay = machineId
                 ? `<code class="text-xs bg-gray-100 px-2 py-1 rounded">${escapeHtml(machineId)}</code>`
                 : '<span class="text-xs text-gray-500">Not set</span>';
+            
+            // License keys display
+            const licenseKeys = sub.license_keys || [];
+            let licenseKeysDisplay = '';
+            if (licenseKeys.length > 0) {
+                const keysList = licenseKeys.map(key => `<code class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded mr-1 mb-1 inline-block">${escapeHtml(key)}</code>`).join('');
+                licenseKeysDisplay = `<div class="flex flex-wrap gap-1">${keysList}</div>`;
+            } else {
+                licenseKeysDisplay = '<span class="text-xs text-gray-500">None</span>';
+            }
 
             row.innerHTML = `
                 <td class="px-6 py-4">
@@ -1054,6 +1068,9 @@
                 <td class="px-6 py-4 text-sm text-gray-900">
                     <div>${expiryDisplay}</div>
                     <div class="text-xs text-gray-500">${expiredText}</div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    ${licenseKeysDisplay}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900">
                     ${machineIdDisplay}
@@ -1103,6 +1120,26 @@
             console.error('Error updating machine ID:', error);
             showToast('Failed to update machine ID', 'error');
         });
+    }
+
+    function exportExpiredSubscriptionsCsv() {
+        const searchInput = document.getElementById('expiredSearch');
+        const search = searchInput ? searchInput.value.trim() : '';
+        
+        let url = '/admin/subscriptions/expired/export-csv';
+        if (search) {
+            url += '?search=' + encodeURIComponent(search);
+        }
+        
+        // Create a temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'expired_subscriptions.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('Exporting CSV...', 'success');
     }
 
     function openBulkMachineIdModal() {

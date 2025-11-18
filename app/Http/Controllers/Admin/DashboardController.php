@@ -1087,6 +1087,7 @@ class DashboardController extends Controller
     {
         $query = MemberSubscription::with([
             'member:id,email,telegram_username',
+            'member.licenseKeys:id,code,used_by,used_at',
             'app:id,display_name,identifier',
         ])
             ->whereNotNull('expiry_date')
@@ -1109,6 +1110,10 @@ class DashboardController extends Controller
             ->orderBy('expiry_date', 'asc')
             ->get()
             ->map(function (MemberSubscription $subscription) {
+                $licenseKeys = $subscription->member && $subscription->member->licenseKeys
+                    ? $subscription->member->licenseKeys->pluck('code')->toArray()
+                    : [];
+
                 return [
                     'id' => $subscription->id,
                     'member' => $subscription->member ? [
@@ -1124,6 +1129,7 @@ class DashboardController extends Controller
                     'machine_id' => $subscription->machine_id,
                     'expiry_date' => $subscription->expiry_date?->toIso8601String(),
                     'expired_days' => $subscription->expiry_date ? $subscription->expiry_date->diffInDays(Carbon::now()) : null,
+                    'license_keys' => $licenseKeys,
                 ];
             });
 
@@ -1132,6 +1138,77 @@ class DashboardController extends Controller
             'subscriptions' => $subscriptions,
             'total' => $subscriptions->count(),
         ]);
+    }
+
+    /**
+     * Export expired subscriptions to CSV
+     */
+    public function exportExpiredSubscriptionsCsv(Request $request)
+    {
+        $query = MemberSubscription::with([
+            'member:id,email,telegram_username',
+            'member.licenseKeys:id,code,used_by,used_at',
+            'app:id,display_name,identifier',
+        ])
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '<', Carbon::now());
+
+        if ($search = trim((string) $request->get('search'))) {
+            $query->whereHas('member', function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                    ->orWhere('telegram_username', 'like', "%{$search}%");
+            });
+        }
+
+        if ($appIdentifier = $request->get('app_identifier')) {
+            $query->whereHas('app', function ($q) use ($appIdentifier) {
+                $q->where('identifier', $appIdentifier);
+            });
+        }
+
+        $subscriptions = $query
+            ->orderBy('expiry_date', 'asc')
+            ->get();
+
+        $filename = 'expired_subscriptions_' . Carbon::now()->format('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($subscriptions) {
+            $file = fopen('php://output', 'w');
+
+            // Header row
+            fputcsv($file, ['Member Email', 'License Keys', 'Expiry Date', 'App', 'Machine ID']);
+
+            foreach ($subscriptions as $subscription) {
+                $memberEmail = $subscription->member ? $subscription->member->email : 'Unknown';
+                $licenseKeys = $subscription->member && $subscription->member->licenseKeys
+                    ? $subscription->member->licenseKeys->pluck('code')->join(', ')
+                    : 'None';
+                $expiryDate = $subscription->expiry_date
+                    ? $subscription->expiry_date->format('Y-m-d H:i:s')
+                    : 'N/A';
+                $appName = $subscription->app
+                    ? $subscription->app->display_name . ' (' . $subscription->app->identifier . ')'
+                    : 'N/A';
+                $machineId = $subscription->machine_id ?? 'Not set';
+
+                fputcsv($file, [
+                    $memberEmail,
+                    $licenseKeys,
+                    $expiryDate,
+                    $appName,
+                    $machineId,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
     }
 
     /**

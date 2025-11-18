@@ -134,6 +134,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     
     // Subscription management
     Route::get('/subscriptions/expired', [DashboardController::class, 'getExpiredSubscriptions']);
+    Route::get('/subscriptions/expired/export-csv', [DashboardController::class, 'exportExpiredSubscriptionsCsv']);
     Route::put('/subscriptions/{subscription}/expiry', [DashboardController::class, 'updateSubscriptionExpiry']);
     Route::put('/subscriptions/{subscription}/machine-id', [DashboardController::class, 'updateSubscriptionMachineId']);
     Route::post('/subscriptions/expired/machine-ids', [DashboardController::class, 'bulkUpdateSubscriptionMachineIds']);
