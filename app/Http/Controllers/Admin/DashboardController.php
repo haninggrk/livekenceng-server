@@ -1087,7 +1087,8 @@ class DashboardController extends Controller
     {
         $query = MemberSubscription::with([
             'member:id,email,telegram_username',
-            'member.licenseKeys:id,code,used_by,used_at',
+            'member.licenseKeys:id,code,used_by,used_at,created_by_reseller_id',
+            'member.licenseKeys.creatorReseller:id,name',
             'app:id,display_name,identifier',
         ])
             ->whereNotNull('expiry_date')
@@ -1114,6 +1115,18 @@ class DashboardController extends Controller
                     ? $subscription->member->licenseKeys->pluck('code')->toArray()
                     : [];
 
+                // Get the first redeemed license key (ordered by used_at) to determine reseller
+                $firstLicenseKey = $subscription->member && $subscription->member->licenseKeys
+                    ? $subscription->member->licenseKeys
+                        ->whereNotNull('used_at')
+                        ->sortBy('used_at')
+                        ->first()
+                    : null;
+
+                $resellerName = $firstLicenseKey && $firstLicenseKey->creatorReseller
+                    ? $firstLicenseKey->creatorReseller->name
+                    : null;
+
                 return [
                     'id' => $subscription->id,
                     'member' => $subscription->member ? [
@@ -1130,6 +1143,7 @@ class DashboardController extends Controller
                     'expiry_date' => $subscription->expiry_date?->toIso8601String(),
                     'expired_days' => $subscription->expiry_date ? $subscription->expiry_date->diffInDays(Carbon::now()) : null,
                     'license_keys' => $licenseKeys,
+                    'reseller_name' => $resellerName,
                 ];
             });
 
@@ -1147,7 +1161,8 @@ class DashboardController extends Controller
     {
         $query = MemberSubscription::with([
             'member:id,email,telegram_username',
-            'member.licenseKeys:id,code,used_by,used_at',
+            'member.licenseKeys:id,code,used_by,used_at,created_by_reseller_id',
+            'member.licenseKeys.creatorReseller:id,name',
             'app:id,display_name,identifier',
         ])
             ->whereNotNull('expiry_date')
@@ -1181,7 +1196,7 @@ class DashboardController extends Controller
             $file = fopen('php://output', 'w');
 
             // Header row
-            fputcsv($file, ['Member Email', 'License Keys', 'Expiry Date', 'App', 'Machine ID']);
+            fputcsv($file, ['Member Email', 'License Keys', 'Expiry Date', 'App', 'Machine ID', 'Reseller']);
 
             foreach ($subscriptions as $subscription) {
                 $memberEmail = $subscription->member ? $subscription->member->email : 'Unknown';
@@ -1196,12 +1211,25 @@ class DashboardController extends Controller
                     : 'N/A';
                 $machineId = $subscription->machine_id ?? 'Not set';
 
+                // Get the first redeemed license key (ordered by used_at) to determine reseller
+                $firstLicenseKey = $subscription->member && $subscription->member->licenseKeys
+                    ? $subscription->member->licenseKeys
+                        ->whereNotNull('used_at')
+                        ->sortBy('used_at')
+                        ->first()
+                    : null;
+
+                $resellerName = $firstLicenseKey && $firstLicenseKey->creatorReseller
+                    ? $firstLicenseKey->creatorReseller->name
+                    : 'N/A';
+
                 fputcsv($file, [
                     $memberEmail,
                     $licenseKeys,
                     $expiryDate,
                     $appName,
                     $machineId,
+                    $resellerName,
                 ]);
             }
 

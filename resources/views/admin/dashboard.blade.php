@@ -352,13 +352,14 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">App</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expired Since</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Keys</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reseller</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Machine ID</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="expiredSubscriptionsBody" class="bg-white divide-y divide-gray-200">
                             <tr>
-                                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                     Click "Refresh List" to load expired subscriptions.
                                 </td>
                             </tr>
@@ -1021,7 +1022,7 @@
         if (filteredExpiredSubscriptions.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                         No expired subscriptions match your search.
                     </td>
                 </tr>
@@ -1057,6 +1058,12 @@
                 licenseKeysDisplay = '<span class="text-xs text-gray-500">None</span>';
             }
 
+            // Reseller display
+            const resellerName = sub.reseller_name || null;
+            const resellerDisplay = resellerName
+                ? `<span class="text-sm font-medium text-gray-900">${escapeHtml(resellerName)}</span>`
+                : '<span class="text-xs text-gray-500">N/A</span>';
+
             row.innerHTML = `
                 <td class="px-6 py-4">
                     <div class="text-sm font-medium text-gray-900">${escapeHtml(email)}</div>
@@ -1071,6 +1078,9 @@
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900">
                     ${licenseKeysDisplay}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    ${resellerDisplay}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900">
                     ${machineIdDisplay}
