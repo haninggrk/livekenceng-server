@@ -33,29 +33,46 @@
     
     <!-- Custom Tailwind Config -->
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fff7ed',
-                            100: '#ffedd5',
-                            200: '#fed7aa',
-                            300: '#fdba74',
-                            400: '#fb923c',
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
-                            800: '#9a3412',
-                            900: '#7c2d12',
+        // Wait for Tailwind to load before configuring
+        (function() {
+            function configureTailwind() {
+                if (typeof tailwind !== 'undefined' && tailwind.config) {
+                    tailwind.config = {
+                        theme: {
+                            extend: {
+                                colors: {
+                                    primary: {
+                                        50: '#fff7ed',
+                                        100: '#ffedd5',
+                                        200: '#fed7aa',
+                                        300: '#fdba74',
+                                        400: '#fb923c',
+                                        500: '#f97316',
+                                        600: '#ea580c',
+                                        700: '#c2410c',
+                                        800: '#9a3412',
+                                        900: '#7c2d12',
+                                    }
+                                },
+                                fontFamily: {
+                                    'sans': ['Inter', 'system-ui', 'sans-serif'],
+                                }
+                            }
                         }
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                    }
+                    };
+                } else {
+                    // Retry if Tailwind hasn't loaded yet
+                    setTimeout(configureTailwind, 50);
                 }
             }
-        }
+            
+            // Start configuration when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', configureTailwind);
+            } else {
+                configureTailwind();
+            }
+        })();
     </script>
     
     <!-- Google Fonts -->
