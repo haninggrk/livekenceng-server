@@ -29,50 +29,37 @@
     <link rel="shortcut icon" type="image/jpeg" href="/images/logo.jpeg">
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com" onload="configureTailwind()"></script>
     
     <!-- Custom Tailwind Config -->
     <script>
-        // Wait for Tailwind to load before configuring
-        (function() {
-            function configureTailwind() {
-                if (typeof tailwind !== 'undefined' && tailwind.config) {
-                    tailwind.config = {
-                        theme: {
-                            extend: {
-                                colors: {
-                                    primary: {
-                                        50: '#fff7ed',
-                                        100: '#ffedd5',
-                                        200: '#fed7aa',
-                                        300: '#fdba74',
-                                        400: '#fb923c',
-                                        500: '#f97316',
-                                        600: '#ea580c',
-                                        700: '#c2410c',
-                                        800: '#9a3412',
-                                        900: '#7c2d12',
-                                    }
-                                },
-                                fontFamily: {
-                                    'sans': ['Inter', 'system-ui', 'sans-serif'],
+        function configureTailwind() {
+            if (typeof tailwind !== 'undefined') {
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                primary: {
+                                    50: '#fff7ed',
+                                    100: '#ffedd5',
+                                    200: '#fed7aa',
+                                    300: '#fdba74',
+                                    400: '#fb923c',
+                                    500: '#f97316',
+                                    600: '#ea580c',
+                                    700: '#c2410c',
+                                    800: '#9a3412',
+                                    900: '#7c2d12',
                                 }
+                            },
+                            fontFamily: {
+                                'sans': ['Inter', 'system-ui', 'sans-serif'],
                             }
                         }
-                    };
-                } else {
-                    // Retry if Tailwind hasn't loaded yet
-                    setTimeout(configureTailwind, 50);
-                }
+                    }
+                };
             }
-            
-            // Start configuration when DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', configureTailwind);
-            } else {
-                configureTailwind();
-            }
-        })();
+        }
     </script>
     
     <!-- Google Fonts -->
