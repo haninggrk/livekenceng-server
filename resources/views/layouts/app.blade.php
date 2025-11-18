@@ -28,12 +28,10 @@
     <link rel="icon" type="image/jpeg" href="/images/logo.jpeg">
     <link rel="shortcut icon" type="image/jpeg" href="/images/logo.jpeg">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com" onload="configureTailwind()"></script>
-    
-    <!-- Custom Tailwind Config -->
+    <!-- Custom Tailwind Config Function (must be defined before Tailwind loads) -->
     <script>
-        function configureTailwind() {
+        // Define function in global scope to ensure it's available
+        window.configureTailwind = function() {
             if (typeof tailwind !== 'undefined') {
                 tailwind.config = {
                     theme: {
@@ -58,9 +56,15 @@
                         }
                     }
                 };
+            } else {
+                // Retry if Tailwind hasn't loaded yet
+                setTimeout(window.configureTailwind, 100);
             }
-        }
+        };
     </script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com" onload="window.configureTailwind()"></script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
