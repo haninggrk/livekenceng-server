@@ -3,22 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Member;
+use App\Models\DeviceMetadata;
 use App\Models\LicenseKey;
-use App\Models\Reseller;
 use App\Models\LicensePlan;
+use App\Models\Member;
+use App\Models\MemberSubscription;
 use App\Models\Niche;
 use App\Models\ProductSet;
 use App\Models\ProductSetItem;
-use App\Models\DeviceMetadata;
-use App\Models\MemberSubscription;
+use App\Models\Reseller;
 use App\Services\ShopeeService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Response;
-use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -28,13 +28,13 @@ class DashboardController extends Controller
     public function index()
     {
         $members = Member::orderBy('created_at', 'desc')->get();
-        
+
         $licenseKeys = LicenseKey::with(['member', 'creator', 'reseller', 'app'])
             ->orderBy('created_at', 'desc')
             ->get();
         $resellers = Reseller::orderBy('created_at', 'desc')->get();
         $plans = LicensePlan::orderBy('duration_days')->get();
-        
+
         return view('admin.dashboard', compact('members', 'licenseKeys', 'resellers', 'plans'));
     }
 
@@ -46,16 +46,16 @@ class DashboardController extends Controller
         $query = Member::with(['licenseKeys', 'subscriptions.app']);
 
         // Search functionality
-        if ($request->has('search') && !empty($request->search)) {
+        if ($request->has('search') && ! empty($request->search)) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('email', 'like', "%{$search}%")
-                  ->orWhere('telegram_username', 'like', "%{$search}%");
+                    ->orWhere('telegram_username', 'like', "%{$search}%");
             });
         }
 
         // Sorting
-        if ($request->has('sort_by') && !empty($request->sort_by)) {
+        if ($request->has('sort_by') && ! empty($request->sort_by)) {
             $sortBy = $request->sort_by;
             switch ($sortBy) {
                 case 'created_at_asc':
@@ -78,10 +78,10 @@ class DashboardController extends Controller
         }
 
         $members = $query->get();
-        
+
         return response()->json([
             'success' => true,
-            'members' => $members
+            'members' => $members,
         ]);
     }
 
@@ -91,6 +91,7 @@ class DashboardController extends Controller
     public function editMember(Member $member)
     {
         $member->load(['subscriptions.app', 'shopeeAccounts', 'deviceMetadata']);
+
         return view('admin.members.edit', compact('member'));
     }
 
@@ -114,7 +115,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Member created successfully',
-            'member' => $member
+            'member' => $member,
         ]);
     }
 
@@ -124,14 +125,14 @@ class DashboardController extends Controller
     public function update(Request $request, Member $member)
     {
         $validated = $request->validate([
-            'email' => 'required|email|unique:members,email,' . $member->id,
+            'email' => 'required|email|unique:members,email,'.$member->id,
             'password' => 'nullable|min:6',
             'telegram_username' => 'nullable|string|max:255',
         ]);
 
         $member->email = $validated['email'];
-        
-        if (!empty($validated['password'])) {
+
+        if (! empty($validated['password'])) {
             $member->password = Hash::make($validated['password']);
         }
 
@@ -144,7 +145,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Member updated successfully',
-            'member' => $member->fresh()
+            'member' => $member->fresh(),
         ]);
     }
 
@@ -157,7 +158,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Member deleted successfully'
+            'message' => 'Member deleted successfully',
         ]);
     }
 
@@ -174,7 +175,7 @@ class DashboardController extends Controller
             'success' => true,
             'message' => 'Password reset successfully',
             'new_password' => $newPassword,
-            'email' => $member->email
+            'email' => $member->email,
         ]);
     }
 
@@ -199,7 +200,7 @@ class DashboardController extends Controller
                 'duration_days' => $plan->duration_days,
                 'plan_id' => $plan->id,
                 'app_id' => $validated['app_id'] ?? null,
-                'price' => (float)$plan->price,
+                'price' => (float) $plan->price,
                 'created_by' => Auth::user()->id,
                 'reseller_id' => $validated['reseller_id'] ?? null,
             ]);
@@ -208,15 +209,15 @@ class DashboardController extends Controller
             // If generated by reseller, track the purchase
             if (isset($validated['reseller_id']) && $validated['reseller_id']) {
                 $reseller = Reseller::find($validated['reseller_id']);
-                $discountedPrice = $reseller->calculatePrice((float)$plan->price);
-                $reseller->trackPurchase($discountedPrice, (float)$plan->price);
+                $discountedPrice = $reseller->calculatePrice((float) $plan->price);
+                $reseller->trackPurchase($discountedPrice, (float) $plan->price);
             }
         }
 
         return response()->json([
             'success' => true,
             'message' => 'License keys generated successfully',
-            'licenses' => $licenses
+            'licenses' => $licenses,
         ]);
     }
 
@@ -231,7 +232,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'licenses' => $licenses
+            'licenses' => $licenses,
         ]);
     }
 
@@ -244,7 +245,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'License key deleted successfully'
+            'message' => 'License key deleted successfully',
         ]);
     }
 
@@ -257,7 +258,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'resellers' => $resellers
+            'resellers' => $resellers,
         ]);
     }
 
@@ -285,7 +286,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Reseller created successfully',
-            'reseller' => $reseller
+            'reseller' => $reseller,
         ]);
     }
 
@@ -296,7 +297,7 @@ class DashboardController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:resellers,email,' . $reseller->id,
+            'email' => 'required|email|unique:resellers,email,'.$reseller->id,
             'password' => 'nullable|min:6',
             'balance' => 'required|numeric|min:0',
             'discount_percentage' => 'required|numeric|min:0|max:100',
@@ -307,7 +308,7 @@ class DashboardController extends Controller
         $reseller->balance = $validated['balance'];
         $reseller->discount_percentage = $validated['discount_percentage'];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $reseller->password = Hash::make($validated['password']);
         }
 
@@ -316,7 +317,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Reseller updated successfully',
-            'reseller' => $reseller->fresh()
+            'reseller' => $reseller->fresh(),
         ]);
     }
 
@@ -329,7 +330,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Reseller deleted successfully'
+            'message' => 'Reseller deleted successfully',
         ]);
     }
 
@@ -347,7 +348,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Balance added successfully',
-            'new_balance' => $reseller->balance
+            'new_balance' => $reseller->balance,
         ]);
     }
 
@@ -367,7 +368,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'License price updated successfully',
-            'price' => $validated['price']
+            'price' => $validated['price'],
         ]);
     }
 
@@ -383,7 +384,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'prices' => $prices
+            'prices' => $prices,
         ]);
     }
 
@@ -393,7 +394,7 @@ class DashboardController extends Controller
     public function getPlans(Request $request)
     {
         $query = LicensePlan::query();
-        
+
         // Filter by app_id if provided
         if ($request->has('app_id')) {
             if ($request->app_id === null || $request->app_id === '') {
@@ -406,8 +407,9 @@ class DashboardController extends Controller
                 $query->where('app_id', $request->app_id);
             }
         }
-        
+
         $plans = $query->with('app')->orderBy('duration_days')->get();
+
         return response()->json([
             'success' => true,
             'plans' => $plans,
@@ -431,7 +433,7 @@ class DashboardController extends Controller
         $existingPlan = LicensePlan::where('app_id', $validated['app_id'])
             ->where('duration_days', $validated['duration_days'])
             ->first();
-        
+
         if ($existingPlan) {
             return response()->json([
                 'success' => false,
@@ -472,7 +474,7 @@ class DashboardController extends Controller
             ->where('duration_days', $validated['duration_days'])
             ->where('id', '!=', $plan->id)
             ->first();
-        
+
         if ($existingPlan) {
             return response()->json([
                 'success' => false,
@@ -485,7 +487,7 @@ class DashboardController extends Controller
         $plan->duration_days = $validated['duration_days'];
         $plan->price = $validated['price'];
         if (array_key_exists('is_active', $validated)) {
-            $plan->is_active = (bool)$validated['is_active'];
+            $plan->is_active = (bool) $validated['is_active'];
         }
         $plan->save();
 
@@ -502,6 +504,7 @@ class DashboardController extends Controller
     public function deletePlan(LicensePlan $plan)
     {
         $plan->delete();
+
         return response()->json([
             'success' => true,
             'message' => 'Plan deleted successfully',
@@ -514,18 +517,18 @@ class DashboardController extends Controller
     public function getMemberNiches(Member $member)
     {
         $niches = $member->niches()->with(['productSets.items'])->orderBy('created_at', 'desc')->get();
-        
+
         // Also get product sets without niche
         $productSetsWithoutNiche = $member->productSets()
             ->whereNull('niche_id')
             ->with('items')
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         return response()->json([
             'success' => true,
             'niches' => $niches,
-            'product_sets_without_niche' => $productSetsWithoutNiche
+            'product_sets_without_niche' => $productSetsWithoutNiche,
         ]);
     }
 
@@ -545,7 +548,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Niche created successfully',
-            'niche' => $niche->load('productSets')
+            'niche' => $niche->load('productSets'),
         ]);
     }
 
@@ -564,7 +567,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Niche updated successfully',
-            'niche' => $niche->fresh(['productSets.items'])
+            'niche' => $niche->fresh(['productSets.items']),
         ]);
     }
 
@@ -574,10 +577,10 @@ class DashboardController extends Controller
     public function deleteNiche(Niche $niche)
     {
         $niche->delete();
-        
+
         return response()->json([
             'success' => true,
-            'message' => 'Niche deleted successfully'
+            'message' => 'Niche deleted successfully',
         ]);
     }
 
@@ -587,44 +590,44 @@ class DashboardController extends Controller
     public function exportNicheToCSV(Niche $niche)
     {
         $niche->load(['productSets.items', 'member']);
-        
-        $filename = 'niche_' . $niche->id . '_' . Str::slug($niche->name) . '_' . now()->format('Y-m-d') . '.csv';
-        
+
+        $filename = 'niche_'.$niche->id.'_'.Str::slug($niche->name).'_'.now()->format('Y-m-d').'.csv';
+
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $callback = function() use ($niche) {
+        $callback = function () use ($niche) {
             $file = fopen('php://output', 'w');
-            
+
             // Header row
-            fputcsv($file, ['Niche: ' . $niche->name]);
-            fputcsv($file, ['Description: ' . ($niche->description ?? 'N/A')]);
-            fputcsv($file, ['Member: ' . $niche->member->email]);
-            fputcsv($file, ['Created: ' . $niche->created_at->format('Y-m-d H:i:s')]);
+            fputcsv($file, ['Niche: '.$niche->name]);
+            fputcsv($file, ['Description: '.($niche->description ?? 'N/A')]);
+            fputcsv($file, ['Member: '.$niche->member->email]);
+            fputcsv($file, ['Created: '.$niche->created_at->format('Y-m-d H:i:s')]);
             fputcsv($file, []); // Empty row
-            
+
             foreach ($niche->productSets as $productSet) {
-                fputcsv($file, ['Product Set: ' . $productSet->name]);
-                fputcsv($file, ['Product Set Description: ' . ($productSet->description ?? 'N/A')]);
-                fputcsv($file, ['Items Count: ' . $productSet->items->count()]);
+                fputcsv($file, ['Product Set: '.$productSet->name]);
+                fputcsv($file, ['Product Set Description: '.($productSet->description ?? 'N/A')]);
+                fputcsv($file, ['Items Count: '.$productSet->items->count()]);
                 fputcsv($file, []); // Empty row
-                
+
                 // Items header
                 fputcsv($file, ['Item URL', 'Shop ID', 'Item ID']);
-                
+
                 foreach ($productSet->items as $item) {
                     fputcsv($file, [
                         $item->url,
                         $item->shop_id,
-                        $item->item_id
+                        $item->item_id,
                     ]);
                 }
-                
+
                 fputcsv($file, []); // Empty row between product sets
             }
-            
+
             fclose($file);
         };
 
@@ -637,10 +640,10 @@ class DashboardController extends Controller
     public function getMemberProductSets(Member $member)
     {
         $productSets = $member->productSets()->with(['niche', 'items'])->orderBy('created_at', 'desc')->get();
-        
+
         return response()->json([
             'success' => true,
-            'product_sets' => $productSets
+            'product_sets' => $productSets,
         ]);
     }
 
@@ -659,10 +662,10 @@ class DashboardController extends Controller
         // Verify niche belongs to member if provided
         if ($validated['niche_id']) {
             $niche = Niche::find($validated['niche_id']);
-            if (!$niche || $niche->member_id != $validated['member_id']) {
+            if (! $niche || $niche->member_id != $validated['member_id']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Niche does not belong to this member'
+                    'message' => 'Niche does not belong to this member',
                 ], 400);
             }
         }
@@ -672,7 +675,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product set created successfully',
-            'product_set' => $productSet->load(['niche', 'items'])
+            'product_set' => $productSet->load('niche'),
         ]);
     }
 
@@ -690,10 +693,10 @@ class DashboardController extends Controller
         // Verify niche belongs to member if provided
         if ($validated['niche_id']) {
             $niche = Niche::find($validated['niche_id']);
-            if (!$niche || $niche->member_id != $productSet->member_id) {
+            if (! $niche || $niche->member_id != $productSet->member_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Niche does not belong to this member'
+                    'message' => 'Niche does not belong to this member',
                 ], 400);
             }
         }
@@ -703,7 +706,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product set updated successfully',
-            'product_set' => $productSet->fresh(['niche', 'items'])
+            'product_set' => $productSet->fresh(['niche', 'items']),
         ]);
     }
 
@@ -713,10 +716,10 @@ class DashboardController extends Controller
     public function deleteProductSet(ProductSet $productSet)
     {
         $productSet->delete();
-        
+
         return response()->json([
             'success' => true,
-            'message' => 'Product set deleted successfully'
+            'message' => 'Product set deleted successfully',
         ]);
     }
 
@@ -739,57 +742,88 @@ class DashboardController extends Controller
         if ($currentItemCount + $newItemsCount > 100) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product set cannot have more than 100 items. Current: ' . $currentItemCount . ', Trying to add: ' . $newItemsCount
+                'message' => 'Product set cannot have more than 100 items. Current: '.$currentItemCount.', Trying to add: '.$newItemsCount,
             ], 400);
         }
 
+        // Fetch all existing URLs in one query to avoid N+1
+        $existingUrls = $productSet->items()->pluck('url')->toArray();
+
+        $itemsToInsert = [];
         $addedItems = [];
         $skippedItems = [];
 
         foreach ($validated['items'] as $itemData) {
             $url = $itemData['url'];
-            
-            // Check for duplicate URL
-            $existingItem = $productSet->items()->where('url', $url)->first();
-            
-            if ($existingItem) {
+
+            // Check for duplicate URL (using in-memory array instead of query)
+            if (in_array($url, $existingUrls)) {
                 $skippedItems[] = [
                     'url' => $url,
-                    'reason' => 'Duplicate URL'
+                    'reason' => 'Duplicate URL',
                 ];
+
                 continue;
             }
 
             // Parse URL if shop_id/item_id not provided
             $shopId = $itemData['shop_id'] ?? null;
             $itemId = $itemData['item_id'] ?? null;
-            
-            if (!$shopId || !$itemId) {
+
+            if (! $shopId || ! $itemId) {
                 $parsed = $this->parseProductUrl($url);
-                if (!$parsed) {
+                if (! $parsed) {
                     $skippedItems[] = [
                         'url' => $url,
-                        'reason' => 'Invalid URL format'
+                        'reason' => 'Invalid URL format',
                     ];
+
                     continue;
                 }
                 $shopId = $parsed['shop_id'];
                 $itemId = $parsed['item_id'];
             }
 
+            // Prepare for bulk insert
+            $itemsToInsert[] = [
+                'product_set_id' => $productSet->id,
+                'url' => $url,
+                'shop_id' => $shopId,
+                'item_id' => $itemId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            // Track added items for response
+            $addedItems[] = [
+                'url' => $url,
+                'shop_id' => $shopId,
+                'item_id' => $itemId,
+            ];
+
+            // Add to existing URLs to prevent duplicates within the same batch
+            $existingUrls[] = $url;
+        }
+
+        // Bulk insert all items at once
+        if (! empty($itemsToInsert)) {
             try {
-                $item = ProductSetItem::create([
-                    'product_set_id' => $productSet->id,
-                    'url' => $url,
-                    'shop_id' => $shopId,
-                    'item_id' => $itemId,
-                ]);
-                $addedItems[] = $item;
+                ProductSetItem::insert($itemsToInsert);
             } catch (\Exception $e) {
-                $skippedItems[] = [
-                    'url' => $url,
-                    'reason' => 'Error: ' . $e->getMessage()
-                ];
+                // If bulk insert fails, fall back to individual inserts to identify problematic items
+                foreach ($itemsToInsert as $index => $itemData) {
+                    try {
+                        ProductSetItem::create($itemData);
+                    } catch (\Exception $insertError) {
+                        $skippedItems[] = [
+                            'url' => $itemData['url'],
+                            'reason' => 'Error: '.$insertError->getMessage(),
+                        ];
+                        // Remove from addedItems
+                        unset($addedItems[$index]);
+                    }
+                }
+                $addedItems = array_values($addedItems);
             }
         }
 
@@ -810,10 +844,11 @@ class DashboardController extends Controller
     {
         if (preg_match('/\/product\/(\d+)\/(\d+)/', $url, $matches)) {
             return [
-                'shop_id' => (int)$matches[1],
-                'item_id' => (int)$matches[2],
+                'shop_id' => (int) $matches[1],
+                'item_id' => (int) $matches[2],
             ];
         }
+
         return null;
     }
 
@@ -825,15 +860,15 @@ class DashboardController extends Controller
         if ($item->product_set_id !== $productSet->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Item does not belong to this product set'
+                'message' => 'Item does not belong to this product set',
             ], 400);
         }
 
         $item->delete();
-        
+
         return response()->json([
             'success' => true,
-            'message' => 'Item deleted successfully'
+            'message' => 'Item deleted successfully',
         ]);
     }
 
@@ -843,10 +878,10 @@ class DashboardController extends Controller
     public function clearProductSetItems(ProductSet $productSet)
     {
         $productSet->items()->delete();
-        
+
         return response()->json([
             'success' => true,
-            'message' => 'All items cleared successfully'
+            'message' => 'All items cleared successfully',
         ]);
     }
 
@@ -856,37 +891,37 @@ class DashboardController extends Controller
     public function exportProductSetToCSV(ProductSet $productSet)
     {
         $productSet->load(['items', 'niche', 'member']);
-        
-        $filename = 'product_set_' . $productSet->id . '_' . Str::slug($productSet->name) . '_' . now()->format('Y-m-d') . '.csv';
-        
+
+        $filename = 'product_set_'.$productSet->id.'_'.Str::slug($productSet->name).'_'.now()->format('Y-m-d').'.csv';
+
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $callback = function() use ($productSet) {
+        $callback = function () use ($productSet) {
             $file = fopen('php://output', 'w');
-            
+
             // Header rows
-            fputcsv($file, ['Product Set: ' . $productSet->name]);
-            fputcsv($file, ['Description: ' . ($productSet->description ?? 'N/A')]);
-            fputcsv($file, ['Niche: ' . ($productSet->niche->name ?? 'No Niche')]);
-            fputcsv($file, ['Member: ' . $productSet->member->email]);
-            fputcsv($file, ['Items Count: ' . $productSet->items->count()]);
-            fputcsv($file, ['Created: ' . $productSet->created_at->format('Y-m-d H:i:s')]);
+            fputcsv($file, ['Product Set: '.$productSet->name]);
+            fputcsv($file, ['Description: '.($productSet->description ?? 'N/A')]);
+            fputcsv($file, ['Niche: '.($productSet->niche->name ?? 'No Niche')]);
+            fputcsv($file, ['Member: '.$productSet->member->email]);
+            fputcsv($file, ['Items Count: '.$productSet->items->count()]);
+            fputcsv($file, ['Created: '.$productSet->created_at->format('Y-m-d H:i:s')]);
             fputcsv($file, []); // Empty row
-            
+
             // Items header
             fputcsv($file, ['URL', 'Shop ID', 'Item ID']);
-            
+
             foreach ($productSet->items as $item) {
                 fputcsv($file, [
                     $item->url,
                     $item->shop_id,
-                    $item->item_id
+                    $item->item_id,
                 ]);
             }
-            
+
             fclose($file);
         };
 
@@ -899,7 +934,7 @@ class DashboardController extends Controller
     public function getActiveLivestreams(Request $request, ShopeeService $shopeeService)
     {
         // Get all active members with active Shopee accounts
-        $members = Member::with(['shopeeAccounts' => function($query) {
+        $members = Member::with(['shopeeAccounts' => function ($query) {
             $query->where('is_active', true);
         }])->get();
 
@@ -908,7 +943,7 @@ class DashboardController extends Controller
         foreach ($members as $member) {
             foreach ($member->shopeeAccounts as $account) {
                 $sessionData = $shopeeService->getActiveSessionData($account->cookie);
-                
+
                 if ($sessionData && $sessionData['session_id']) {
                     $activeLivestreams[] = [
                         'member_email' => $member->email,
@@ -921,7 +956,7 @@ class DashboardController extends Controller
                         'comments' => $sessionData['comments'],
                         'atc' => $sessionData['atc'],
                         'placed_orders' => $sessionData['placed_orders'],
-                        'confirmed_orders' => $sessionData['confirmed_orders']
+                        'confirmed_orders' => $sessionData['confirmed_orders'],
                     ];
                 }
             }
@@ -930,7 +965,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'livestreams' => $activeLivestreams,
-            'total' => count($activeLivestreams)
+            'total' => count($activeLivestreams),
         ]);
     }
 
@@ -1007,21 +1042,23 @@ class DashboardController extends Controller
         foreach ($updates as $update) {
             $subscription = $subscriptions->get($update['subscription_id']);
 
-            if (!$subscription) {
+            if (! $subscription) {
                 $results[] = [
                     'subscription_id' => $update['subscription_id'],
                     'status' => 'not_found',
                     'message' => 'Subscription not found',
                 ];
+
                 continue;
             }
 
-            if (!$subscription->expiry_date || $subscription->expiry_date->isFuture()) {
+            if (! $subscription->expiry_date || $subscription->expiry_date->isFuture()) {
                 $results[] = [
                     'subscription_id' => $subscription->id,
                     'status' => 'skipped',
                     'message' => 'Subscription is not expired',
                 ];
+
                 continue;
             }
 
@@ -1103,10 +1140,10 @@ class DashboardController extends Controller
     public function getMemberDeviceMetadata(Member $member)
     {
         $devices = $member->deviceMetadata()->orderBy('created_at', 'desc')->get();
-        
+
         return response()->json([
             'success' => true,
-            'devices' => $devices
+            'devices' => $devices,
         ]);
     }
 
@@ -1128,7 +1165,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Device metadata created successfully',
-            'device' => $device
+            'device' => $device,
         ]);
     }
 
@@ -1149,7 +1186,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Device metadata updated successfully',
-            'device' => $deviceMetadata->fresh()
+            'device' => $deviceMetadata->fresh(),
         ]);
     }
 
@@ -1159,10 +1196,10 @@ class DashboardController extends Controller
     public function deleteDeviceMetadata(DeviceMetadata $deviceMetadata)
     {
         $deviceMetadata->delete();
-        
+
         return response()->json([
             'success' => true,
-            'message' => 'Device metadata deleted successfully'
+            'message' => 'Device metadata deleted successfully',
         ]);
     }
 }
