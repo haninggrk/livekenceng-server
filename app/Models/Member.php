@@ -27,10 +27,10 @@ class Member extends Model
      */
     public function isActive(): bool
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return false;
         }
-        
+
         return $this->expiry_date->isFuture();
     }
 
@@ -56,6 +56,14 @@ class Member extends Model
     public function activeShopeeAccounts()
     {
         return $this->hasMany(ShopeeAccount::class)->where('is_active', true);
+    }
+
+    /**
+     * TikTok accounts owned by this member
+     */
+    public function tiktokAccounts()
+    {
+        return $this->hasMany(TikTokAccount::class);
     }
 
     /**
@@ -104,6 +112,7 @@ class Member extends Model
     public function hasActiveSubscriptionForApp($appId): bool
     {
         $subscription = $this->subscriptions()->where('app_id', $appId)->first();
+
         return $subscription && $subscription->isActive();
     }
 
@@ -120,11 +129,13 @@ class Member extends Model
      */
     public function checkAndUpdateExpiredStatus(): bool
     {
-        if (!$this->isActive() && $this->machine_id && $this->machine_id !== 'EXPIRED') {
+        if (! $this->isActive() && $this->machine_id && $this->machine_id !== 'EXPIRED') {
             $this->machine_id = 'EXPIRED';
             $this->save();
+
             return true; // Status was updated
         }
+
         return false; // No update needed
     }
 }

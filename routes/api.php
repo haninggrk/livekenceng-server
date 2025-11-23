@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\DeviceMetadataController;
 use App\Http\Controllers\Api\MemberController;
-use App\Http\Controllers\Api\UpdateController;
-use App\Http\Controllers\Api\ShopeeAccountController;
 use App\Http\Controllers\Api\NicheController;
 use App\Http\Controllers\Api\ProductSetController;
+use App\Http\Controllers\Api\ShopeeAccountController;
 use App\Http\Controllers\Api\ShopeeLiveController;
-use App\Http\Controllers\Api\DeviceMetadataController;
+use App\Http\Controllers\Api\TikTokAccountController;
+use App\Http\Controllers\Api\UpdateController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,44 +21,50 @@ Route::prefix('members')->group(function () {
     Route::post('/login', [MemberController::class, 'login']);
     Route::post('/redeem-license', [MemberController::class, 'redeemLicense']);
     Route::post('/change-password', [MemberController::class, 'changePassword']);
-    
+
     // Profile management
     Route::post('/profile', [MemberController::class, 'getProfile'])->middleware('log.profile');
     Route::put('/telegram', [MemberController::class, 'updateTelegram']);
-    
+
     // Settings
     Route::post('/settings', [MemberController::class, 'getSettings']);
     Route::put('/settings', [MemberController::class, 'updateSettings']);
-    
+
     // Machine ID management
     Route::get('/machine-id/{email}', [MemberController::class, 'getMachineId']);
     Route::post('/machine-id', [MemberController::class, 'updateMachineId']);
-    
+
     // Shopee accounts
     Route::get('/shopee-accounts', [ShopeeAccountController::class, 'getMemberShopeeAccounts']);
     Route::post('/shopee-accounts', [ShopeeAccountController::class, 'addShopeeAccount']);
     Route::put('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'updateShopeeAccount']);
     Route::delete('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'deleteShopeeAccount']);
-    
+
+    // TikTok accounts
+    Route::get('/tiktok-accounts', [TikTokAccountController::class, 'getMemberTikTokAccounts']);
+    Route::post('/tiktok-accounts', [TikTokAccountController::class, 'addTikTokAccount']);
+    Route::put('/tiktok-accounts/{tiktokAccount}', [TikTokAccountController::class, 'updateTikTokAccount']);
+    Route::delete('/tiktok-accounts/{tiktokAccount}', [TikTokAccountController::class, 'deleteTikTokAccount']);
+
     // Niches - DISABLED (can be re-enabled later in development)
     // Route::get('/niches', [NicheController::class, 'index']);
     // Route::post('/niches', [NicheController::class, 'store']);
     // Route::get('/niches/{niche}', [NicheController::class, 'show']);
     // Route::put('/niches/{niche}', [NicheController::class, 'update']);
     // Route::delete('/niches/{niche}', [NicheController::class, 'destroy']);
-    
+
     // Product Sets - DISABLED (can be re-enabled later in development)
     // Route::get('/product-sets', [ProductSetController::class, 'index']);
     // Route::post('/product-sets', [ProductSetController::class, 'store']);
     // Route::get('/product-sets/{productSet}', [ProductSetController::class, 'show']);
     // Route::put('/product-sets/{productSet}', [ProductSetController::class, 'update']);
     // Route::delete('/product-sets/{productSet}', [ProductSetController::class, 'destroy']);
-    
+
     // Product Set Items - DISABLED (can be re-enabled later in development)
     // Route::post('/product-sets/{productSet}/items', [ProductSetController::class, 'addItems']);
     // Route::delete('/product-sets/{productSet}/items/{item}', [ProductSetController::class, 'removeItem']);
     // Route::delete('/product-sets/{productSet}/items', [ProductSetController::class, 'clearItems']);
-    
+
     // Device Metadata
     Route::get('/device-metadata', [DeviceMetadataController::class, 'index']);
     Route::post('/device-metadata', [DeviceMetadataController::class, 'store']);

@@ -1,0 +1,211 @@
+================================================================================
+AUTHENTICATION GUIDE - New Bot Frontend
+================================================================================
+
+BASE URL
+--------
+Production: https://livekenceng.com/api
+Development: http://localhost:8000/api
+
+IMPORTANT: APP IDENTIFIER
+--------------------------
+Always include "app_identifier" parameter in requests for new bot applications.
+If omitted, system defaults to legacy "livekenceng" app.
+
+Replace "your-new-bot-identifier" with your actual app identifier
+(e.g., "bot-gacor", "shopee-bot", etc.)
+
+
+================================================================================
+1. LOGIN
+================================================================================
+
+Endpoint: POST /api/members/login
+
+Request Body:
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "machine_id": "unique-device-id",
+  "app_identifier": "your-new-bot-identifier"
+}
+
+Required Fields:
+- email (string): User's email address
+- password (string): User's password
+- machine_id (string): Unique device identifier (must be persistent per device)
+- app_identifier (string): REQUIRED - Your bot's app identifier
+
+Success Response (200 OK):
+{
+  "success": true,
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "telegram_username": "@username",
+    "expiry_date": "2025-11-14T12:00:00+00:00",
+    "machine_id": "unique-device-id",
+    "created_at": "2025-10-14T12:00:00.000000Z",
+    "updated_at": "2025-10-23T15:40:00.000000Z"
+  }
+}
+
+Error Responses:
+- 400: Missing required fields ("Email, password, and machine_id are required")
+- 400: Invalid app identifier ("Invalid app identifier")
+- 401: Invalid credentials ("Invalid credentials")
+- 401: No subscription ("No subscription found for this app")
+- 401: Subscription expired ("Subscription expired for this app. Please contact support to renew.")
+- 401: Machine ID mismatch ("Machine ID mismatch for this app")
+    NOTE: This means account already has different machine ID registered.
+    Only one device can be active at a time.
+
+
+================================================================================
+2. CHECK MACHINE ID
+================================================================================
+
+Endpoint: GET /api/members/machine-id/{email}?app_identifier=your-new-bot-identifier
+
+Query Parameters:
+- app_identifier (required): Your bot's app identifier
+
+Example:
+GET /api/members/machine-id/user@example.com?app_identifier=your-new-bot-identifier
+
+Success Response (200 OK):
+{
+  "success": true,
+  "email": "user@example.com",
+  "machine_id": "existing-machine-id-or-null",
+  "app_identifier": "your-new-bot-identifier"
+}
+
+Error Responses:
+- 404: User not found ("User not found")
+- 404: App not found ("App not found")
+- 404: No subscription ("No subscription found for this app")
+
+
+================================================================================
+3. UPDATE MACHINE ID
+================================================================================
+
+Endpoint: POST /api/members/machine-id
+
+Request Body:
+{
+  "email": "user@example.com",
+  "machine_id": "new-device-id",
+  "app_identifier": "your-new-bot-identifier"
+}
+
+Required Fields:
+- email (string): User's email address
+- machine_id (string): New device identifier
+- app_identifier (string): REQUIRED - Your bot's app identifier
+
+Success Response (200 OK):
+{
+  "success": true,
+  "message": "Machine ID updated successfully",
+  "email": "user@example.com",
+  "machine_id": "new-device-id",
+  "app_identifier": "your-new-bot-identifier"
+}
+
+Error Responses:
+- 400: Missing required fields ("Email and machine_id are required")
+- 404: User not found ("User not found")
+- 404: App not found ("App not found")
+- 404: No subscription ("No active subscription found for this app")
+
+
+================================================================================
+SINGLE DEVICE ENFORCEMENT
+================================================================================
+
+The system enforces single device per account per app:
+
+1. First Login:
+   - If machine_id is not set, it will be set to the provided machine_id
+   - Login succeeds
+
+2. Subsequent Logins:
+   - If machine_id matches stored value: Login succeeds
+   - If machine_id does not match: Login fails with "Machine ID mismatch"
+
+3. Switching Devices:
+   - Use "Update Machine ID" endpoint to change to new device
+   - This automatically logs out the previous device
+   - New device can then login with the updated machine_id
+
+IMPORTANT NOTES:
+- Machine ID must be persistent per device (store locally)
+- Machine ID should be unique per device installation
+- Only ONE device can be active per account per app at any time
+- If user wants to use different device, they MUST update machine ID first
+
+
+================================================================================
+AUTHENTICATION FLOW SUMMARY
+================================================================================
+
+1. Generate/retrieve persistent machine_id for current device
+
+2. (Optional) Check existing machine_id:
+   GET /api/members/machine-id/{email}?app_identifier=your-new-bot-identifier
+
+3. Login with credentials and machine_id:
+   POST /api/members/login
+   Body: { email, password, machine_id, app_identifier }
+
+4. If login fails with "Machine ID mismatch":
+   - User must update machine_id if they want to use new device
+   - POST /api/members/machine-id
+   - Then retry login
+
+5. On successful login:
+   - Store user data from response
+   - Check expiry_date to ensure subscription is active
+   - Machine_id is now locked to this device until updated
+
+
+================================================================================
+STANDARD RESPONSE FORMAT
+================================================================================
+
+Success Response:
+{
+  "success": true,
+  "message": "Optional success message",
+  "data": { ... }  // or "user": { ... }
+}
+
+Error Response:
+{
+  "success": false,
+  "message": "Error description",
+  "errors": {
+    "field": ["Validation error messages"]
+  }
+}
+
+
+================================================================================
+STATUS CODES
+================================================================================
+
+200 - OK: Request successful
+400 - Bad Request: Missing or invalid parameters
+401 - Unauthorized: Invalid credentials / Expired subscription / Machine ID mismatch
+403 - Forbidden: Unauthorized access to resource
+404 - Not Found: Resource not found (user, app, subscription, etc.)
+422 - Unprocessable Entity: Validation errors
+500 - Internal Server Error: Server error
+
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+

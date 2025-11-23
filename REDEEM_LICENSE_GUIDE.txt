@@ -1,0 +1,136 @@
+================================================================================
+REDEEM LICENSE KEY GUIDE - New Bot Frontend
+================================================================================
+
+BASE URL
+--------
+Production: https://livekenceng.com/api
+Development: http://localhost:8000/api
+
+
+================================================================================
+REDEEM LICENSE KEY
+================================================================================
+
+Endpoint: POST /api/members/redeem-license
+
+Request Body:
+{
+  "email": "user@example.com",
+  "license_key": "LK-ABCD-EFGH-IJKL"
+}
+
+Required Fields:
+- email (string): User's email address
+- license_key (string): License key code to redeem
+
+NOTE: License key's app_id determines which app subscription is created/extended.
+No app_identifier parameter needed in request - handled automatically by license key.
+
+Success Response (200 OK):
+{
+  "success": true,
+  "message": "License key redeemed successfully",
+  "expiry_date": "2025-12-08T00:00:00+00:00",
+  "days_added": 7,
+  "is_new_member": false
+}
+
+Success Response - New Member Created (200 OK):
+{
+  "success": true,
+  "message": "New account created and license activated successfully",
+  "expiry_date": "2025-12-08T00:00:00+00:00",
+  "days_added": 7,
+  "is_new_member": true,
+  "email": "user@example.com",
+  "password": "generated-random-password"
+}
+
+Response Fields:
+- success (boolean): Request status
+- message (string): Success message
+- expiry_date (string): New subscription expiry date (ISO 8601 format)
+- days_added (integer): Number of days added to subscription
+- is_new_member (boolean): Whether new account was created
+- email (string): User's email (only for new members)
+- password (string): Generated password (only for new members - MUST SAVE THIS)
+
+Error Responses:
+- 400: Missing required fields ("Email and license_key are required")
+- 400: License already used ("License key already used")
+- 400: Invalid app ("This license is for an inactive or invalid app")
+- 404: Invalid license key ("Invalid license key")
+
+
+================================================================================
+HOW IT WORKS
+================================================================================
+
+1. Existing Member:
+   - License key is validated
+   - If subscription exists: Days are added to current expiry date
+   - If subscription expired: Days are added from today
+   - If no subscription: New subscription is created with license duration
+   - License key is marked as used
+
+2. New Member:
+   - New account is automatically created
+   - Random password is generated (12 characters)
+   - Subscription is created for the app specified in license key
+   - License key is marked as used
+   - Response includes email and generated password (MUST SAVE PASSWORD)
+
+3. License Key App Assignment:
+   - License key has an app_id that determines target app
+   - Subscription is created/extended for that specific app
+   - No app_identifier needed in request
+
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+- License keys can only be used ONCE
+- Each license key is tied to a specific app (via app_id)
+- If member doesn't exist, account is automatically created
+- For new members: Generated password is returned - MUST be saved and shown to user
+- License key must be for an active app
+- Days are added to current expiry date (or from today if expired)
+
+
+================================================================================
+REDEEM FLOW SUMMARY
+================================================================================
+
+1. User enters email and license key
+
+2. Send redeem request:
+   POST /api/members/redeem-license
+   Body: { email, license_key }
+
+3. Check response:
+   - If success: Store expiry_date, check is_new_member
+   - If new member: Save generated password and email
+   - If error: Show error message to user
+
+4. For new members:
+   - Display generated password to user
+   - Prompt user to save password securely
+   - User can then login with email and generated password
+
+
+================================================================================
+STATUS CODES
+================================================================================
+
+200 - OK: License redeemed successfully
+400 - Bad Request: Missing fields / License already used / Invalid app
+404 - Not Found: Invalid license key
+500 - Internal Server Error: Server error
+
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+
