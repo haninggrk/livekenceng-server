@@ -1,0 +1,221 @@
+================================================================================
+TIKTOK ACCOUNTS API GUIDE - New Bot Frontend
+================================================================================
+
+BASE URL
+--------
+Production: https://livekenceng.com/api
+Development: http://localhost:8000/api
+
+IMPORTANT: All endpoints require authentication via email and password
+(Member's email and password, not TikTok account credentials)
+
+
+================================================================================
+1. GET TIKTOK ACCOUNTS (List All)
+================================================================================
+
+Endpoint: GET /api/members/tiktok-accounts
+
+Query Parameters (or POST body):
+- email (required): Member's email address
+- password (required): Member's password
+
+Example:
+GET /api/members/tiktok-accounts?email=user@example.com&password=password123
+
+Success Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "member_id": 1,
+      "name": "My TikTok Account",
+      "email": "tiktok@example.com",
+      "username": "@myusername",
+      "cookie": "cookie_data_here",
+      "created_at": "2025-11-23T12:00:00.000000Z",
+      "updated_at": "2025-11-23T12:00:00.000000Z"
+    }
+  ]
+}
+
+Error Responses:
+- 400: Missing required fields ("Email and password are required")
+- 401: Invalid credentials ("Invalid credentials")
+
+
+================================================================================
+2. CREATE TIKTOK ACCOUNT
+================================================================================
+
+Endpoint: POST /api/members/tiktok-accounts
+
+Request Body:
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "name": "My TikTok Account",
+  "email_account": "tiktok@example.com",
+  "username": "@myusername",
+  "cookie": "cookie_data_here"
+}
+
+Required Fields:
+- email (string): Member's email address (for authentication)
+- password (string): Member's password (for authentication)
+- name (string): Account name/label
+- cookie (string): TikTok cookie data
+
+Optional Fields:
+- email_account (string): TikTok account email
+- username (string): TikTok username
+
+Success Response (200 OK):
+{
+  "success": true,
+  "message": "TikTok account added successfully",
+  "data": {
+    "id": 1,
+    "member_id": 1,
+    "name": "My TikTok Account",
+    "email": "tiktok@example.com",
+    "username": "@myusername",
+    "cookie": "cookie_data_here",
+    "created_at": "2025-11-23T12:00:00.000000Z",
+    "updated_at": "2025-11-23T12:00:00.000000Z"
+  }
+}
+
+Error Responses:
+- 400: Missing required fields
+- 401: Invalid credentials ("Invalid credentials")
+- 422: Validation errors (check errors object for details)
+
+
+================================================================================
+3. UPDATE TIKTOK ACCOUNT
+================================================================================
+
+Endpoint: PUT /api/members/tiktok-accounts/{tiktokAccount}
+
+URL Parameter:
+- tiktokAccount (integer): TikTok account ID
+
+Request Body:
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "name": "Updated Account Name",
+  "email_account": "newemail@example.com",
+  "username": "@newusername",
+  "cookie": "updated_cookie_data"
+}
+
+Required Fields:
+- email (string): Member's email address (for authentication)
+- password (string): Member's password (for authentication)
+- name (string): Account name/label
+- cookie (string): TikTok cookie data
+
+Optional Fields:
+- email_account (string): TikTok account email
+- username (string): TikTok username
+
+Success Response (200 OK):
+{
+  "success": true,
+  "message": "TikTok account updated successfully",
+  "data": {
+    "id": 1,
+    "member_id": 1,
+    "name": "Updated Account Name",
+    "email": "newemail@example.com",
+    "username": "@newusername",
+    "cookie": "updated_cookie_data",
+    "created_at": "2025-11-23T12:00:00.000000Z",
+    "updated_at": "2025-11-23T15:30:00.000000Z"
+  }
+}
+
+Error Responses:
+- 400: Missing required fields
+- 401: Invalid credentials ("Invalid credentials")
+- 403: Unauthorized access ("Unauthorized access to TikTok account")
+- 422: Validation errors (check errors object for details)
+
+
+================================================================================
+4. DELETE TIKTOK ACCOUNT
+================================================================================
+
+Endpoint: DELETE /api/members/tiktok-accounts/{tiktokAccount}
+
+URL Parameter:
+- tiktokAccount (integer): TikTok account ID
+
+Request Body:
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+Required Fields:
+- email (string): Member's email address (for authentication)
+- password (string): Member's password (for authentication)
+
+Success Response (200 OK):
+{
+  "success": true,
+  "message": "TikTok account deleted successfully"
+}
+
+Error Responses:
+- 400: Missing required fields ("Email and password are required")
+- 401: Invalid credentials ("Invalid credentials")
+- 403: Unauthorized access ("Unauthorized access to TikTok account")
+
+
+================================================================================
+SECURITY NOTES
+================================================================================
+
+- All endpoints require member authentication (email + password)
+- Members can only access their own TikTok accounts
+- Unauthorized access attempts return 403 Forbidden
+- Account ownership is verified on update/delete operations
+- Member's subscription status is checked on GET requests
+
+
+================================================================================
+DATA FIELDS
+================================================================================
+
+TikTok Account Object:
+- id (integer): Unique account ID
+- member_id (integer): Owner member ID
+- name (string): Account name/label (required)
+- email (string): TikTok account email (optional, nullable)
+- username (string): TikTok username (optional, nullable)
+- cookie (string): Cookie data (required)
+- created_at (string): ISO 8601 datetime
+- updated_at (string): ISO 8601 datetime
+
+
+================================================================================
+STATUS CODES
+================================================================================
+
+200 - OK: Request successful
+400 - Bad Request: Missing or invalid parameters
+401 - Unauthorized: Invalid credentials
+403 - Forbidden: Unauthorized access to TikTok account
+422 - Unprocessable Entity: Validation errors
+500 - Internal Server Error: Server error
+
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+

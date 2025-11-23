@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class TikTokAccount extends Model
 {
+    protected $table = 'tiktok_accounts';
+
     protected $fillable = [
         'member_id',
         'name',
