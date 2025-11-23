@@ -87,5 +87,6 @@ Route::prefix('shopee-live')->group(function () {
     Route::post('/session-ids', [ShopeeLiveController::class, 'getSessionIds']);
     Route::post('/active-session', [ShopeeLiveController::class, 'getActiveSession']);
     Route::post('/replace-products', [ShopeeLiveController::class, 'replaceProducts']);
+    Route::post('/replace-products-with-items', [ShopeeLiveController::class, 'replaceProductsWithItems']);
     Route::post('/clear-products', [ShopeeLiveController::class, 'clearProducts']);
 });
