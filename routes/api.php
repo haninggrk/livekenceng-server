@@ -39,24 +39,24 @@ Route::prefix('members')->group(function () {
     Route::put('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'updateShopeeAccount']);
     Route::delete('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'deleteShopeeAccount']);
     
-    // Niches
-    Route::get('/niches', [NicheController::class, 'index']);
-    Route::post('/niches', [NicheController::class, 'store']);
-    Route::get('/niches/{niche}', [NicheController::class, 'show']);
-    Route::put('/niches/{niche}', [NicheController::class, 'update']);
-    Route::delete('/niches/{niche}', [NicheController::class, 'destroy']);
+    // Niches - DISABLED (can be re-enabled later in development)
+    // Route::get('/niches', [NicheController::class, 'index']);
+    // Route::post('/niches', [NicheController::class, 'store']);
+    // Route::get('/niches/{niche}', [NicheController::class, 'show']);
+    // Route::put('/niches/{niche}', [NicheController::class, 'update']);
+    // Route::delete('/niches/{niche}', [NicheController::class, 'destroy']);
     
-    // Product Sets
-    Route::get('/product-sets', [ProductSetController::class, 'index']);
-    Route::post('/product-sets', [ProductSetController::class, 'store']);
-    Route::get('/product-sets/{productSet}', [ProductSetController::class, 'show']);
-    Route::put('/product-sets/{productSet}', [ProductSetController::class, 'update']);
-    Route::delete('/product-sets/{productSet}', [ProductSetController::class, 'destroy']);
+    // Product Sets - DISABLED (can be re-enabled later in development)
+    // Route::get('/product-sets', [ProductSetController::class, 'index']);
+    // Route::post('/product-sets', [ProductSetController::class, 'store']);
+    // Route::get('/product-sets/{productSet}', [ProductSetController::class, 'show']);
+    // Route::put('/product-sets/{productSet}', [ProductSetController::class, 'update']);
+    // Route::delete('/product-sets/{productSet}', [ProductSetController::class, 'destroy']);
     
-    // Product Set Items
-    Route::post('/product-sets/{productSet}/items', [ProductSetController::class, 'addItems']);
-    Route::delete('/product-sets/{productSet}/items/{item}', [ProductSetController::class, 'removeItem']);
-    Route::delete('/product-sets/{productSet}/items', [ProductSetController::class, 'clearItems']);
+    // Product Set Items - DISABLED (can be re-enabled later in development)
+    // Route::post('/product-sets/{productSet}/items', [ProductSetController::class, 'addItems']);
+    // Route::delete('/product-sets/{productSet}/items/{item}', [ProductSetController::class, 'removeItem']);
+    // Route::delete('/product-sets/{productSet}/items', [ProductSetController::class, 'clearItems']);
     
     // Device Metadata
     Route::get('/device-metadata', [DeviceMetadataController::class, 'index']);
