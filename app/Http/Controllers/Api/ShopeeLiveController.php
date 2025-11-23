@@ -193,8 +193,8 @@ class ShopeeLiveController extends Controller
             'shopee_account_id' => 'required|exists:shopee_accounts,id',
             'session_id' => 'required|string',
             'items' => 'required|array',
-            'items.*.item_id' => 'required|string',
-            'items.*.shop_id' => 'required|string',
+            'items.*.item_id' => 'required',
+            'items.*.shop_id' => 'required',
         ]);
 
         $member = Member::where('email', $request->email)->first();
@@ -224,8 +224,8 @@ class ShopeeLiveController extends Controller
 
         $items = array_map(function ($item) {
             return [
-                'shop_id' => $item['shop_id'],
-                'item_id' => $item['item_id'],
+                'shop_id' => (int) $item['shop_id'],
+                'item_id' => (int) $item['item_id'],
             ];
         }, $request->items);
 
