@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $licenseKeys = LicenseKey::with(['member', 'creator', 'reseller', 'app'])
             ->orderBy('created_at', 'desc')
             ->get();
-        $resellers = Reseller::orderBy('created_at', 'desc')->get();
+        $resellers = Reseller::with('allowedApps:id,name,display_name,identifier')->orderBy('created_at', 'desc')->get();
         $plans = LicensePlan::orderBy('duration_days')->get();
 
         return view('admin.dashboard', compact('members', 'licenseKeys', 'resellers', 'plans'));
@@ -254,7 +254,10 @@ class DashboardController extends Controller
      */
     public function getResellers()
     {
-        $resellers = Reseller::withCount('licenseKeys')->orderBy('created_at', 'desc')->get();
+        $resellers = Reseller::withCount('licenseKeys')
+            ->with('allowedApps:id,name,display_name,identifier')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -349,6 +352,40 @@ class DashboardController extends Controller
             'success' => true,
             'message' => 'Balance added successfully',
             'new_balance' => $reseller->balance,
+        ]);
+    }
+
+    /**
+     * Get reseller's allowed apps
+     */
+    public function getResellerApps(Reseller $reseller)
+    {
+        $allowedApps = $reseller->allowedApps()->get();
+        $allApps = \App\Models\App::where('is_active', true)->get();
+
+        return response()->json([
+            'success' => true,
+            'allowed_apps' => $allowedApps,
+            'all_apps' => $allApps,
+        ]);
+    }
+
+    /**
+     * Update reseller's allowed apps
+     */
+    public function updateResellerApps(Request $request, Reseller $reseller)
+    {
+        $validated = $request->validate([
+            'app_ids' => 'required|array',
+            'app_ids.*' => 'integer|exists:apps,id',
+        ]);
+
+        $reseller->allowedApps()->sync($validated['app_ids']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reseller app permissions updated successfully',
+            'allowed_apps' => $reseller->allowedApps()->get(),
         ]);
     }
 
@@ -1185,11 +1222,11 @@ class DashboardController extends Controller
             ->orderBy('expiry_date', 'asc')
             ->get();
 
-        $filename = 'expired_subscriptions_' . Carbon::now()->format('Y-m-d_His') . '.csv';
+        $filename = 'expired_subscriptions_'.Carbon::now()->format('Y-m-d_His').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($subscriptions) {
@@ -1207,7 +1244,7 @@ class DashboardController extends Controller
                     ? $subscription->expiry_date->format('Y-m-d H:i:s')
                     : 'N/A';
                 $appName = $subscription->app
-                    ? $subscription->app->display_name . ' (' . $subscription->app->identifier . ')'
+                    ? $subscription->app->display_name.' ('.$subscription->app->identifier.')'
                     : 'N/A';
                 $machineId = $subscription->machine_id ?? 'Not set';
 

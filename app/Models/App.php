@@ -49,4 +49,12 @@ class App extends Model
     {
         return $this->hasMany(LicensePlan::class)->where('is_active', true);
     }
+
+    /**
+     * Resellers that can purchase licenses for this app
+     */
+    public function allowedResellers()
+    {
+        return $this->belongsToMany(Reseller::class, 'reseller_app');
+    }
 }
