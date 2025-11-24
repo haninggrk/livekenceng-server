@@ -7,7 +7,6 @@ use App\Models\App;
 use App\Models\LicenseKey;
 use App\Models\LicensePlan;
 use App\Models\Reseller;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,15 +22,16 @@ class DashboardController extends Controller
             ->with(['member', 'app'])
             ->orderBy('created_at', 'desc')
             ->get();
-        
-        // Get all apps
-        $apps = App::withCount(['licensePlans' => function($query) {
+
+        // Get only apps that this reseller can purchase licenses for
+        $apps = $reseller->allowedApps()
+            ->withCount(['licensePlans' => function ($query) {
                 $query->where('is_active', true);
             }])
             ->where('is_active', true)
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         return view('reseller.dashboard', compact('reseller', 'licenses', 'apps'));
     }
 
@@ -41,9 +41,9 @@ class DashboardController extends Controller
     public function getPricing(Request $request)
     {
         $reseller = Auth::guard('reseller')->user();
-        
+
         $query = LicensePlan::where('is_active', true);
-        
+
         // Filter by app_id if provided
         if ($request->has('app_id')) {
             if ($request->app_id === null || $request->app_id === '') {
@@ -53,19 +53,37 @@ class DashboardController extends Controller
                     $query->where('app_id', $livekencengApp->id);
                 }
             } else {
-                $query->where('app_id', $request->app_id);
+                $appId = $request->app_id;
+                // Verify reseller can purchase this app
+                if (! $reseller->canPurchaseApp($appId)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not authorized to purchase licenses for this app.',
+                    ], 403);
+                }
+                $query->where('app_id', $appId);
+            }
+        } else {
+            // If no app_id specified, only show plans for apps the reseller can purchase
+            $allowedAppIds = $reseller->allowedApps()->pluck('apps.id')->toArray();
+            if (! empty($allowedAppIds)) {
+                $query->whereIn('app_id', $allowedAppIds);
+            } else {
+                // If reseller has no allowed apps, return empty result
+                $query->whereRaw('1 = 0');
             }
         }
-        
+
         $plans = $query->orderBy('duration_days')->get();
         $pricing = $plans->map(function ($plan) use ($reseller) {
-            $basePrice = (float)$plan->price;
+            $basePrice = (float) $plan->price;
+
             return [
                 'plan_id' => $plan->id,
                 'name' => $plan->name,
                 'duration_days' => $plan->duration_days,
                 'base_price' => $basePrice,
-                'discount' => (float)$reseller->discount_percentage,
+                'discount' => (float) $reseller->discount_percentage,
                 'final_price' => $reseller->calculatePrice($basePrice),
             ];
         })->values();
@@ -90,17 +108,25 @@ class DashboardController extends Controller
         $reseller = Auth::guard('reseller')->user();
 
         $plan = LicensePlan::where('is_active', true)->findOrFail($validated['plan_id']);
-        $basePrice = (float)$plan->price;
-        $durationDays = (int)$plan->duration_days;
+        $basePrice = (float) $plan->price;
+        $durationDays = (int) $plan->duration_days;
+
+        // Check if reseller can purchase licenses for this app
+        if ($plan->app_id && ! $reseller->canPurchaseApp($plan->app_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to purchase licenses for this app.',
+            ], 403);
+        }
 
         $finalPrice = $reseller->calculatePrice($basePrice);
         $totalCost = $finalPrice * $validated['quantity'];
 
         // Check if reseller can afford
-        if (!$reseller->canAfford($totalCost)) {
+        if (! $reseller->canAfford($totalCost)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Insufficient balance. Required: Rp ' . number_format($totalCost, 0, ',', '.'),
+                'message' => 'Insufficient balance. Required: Rp '.number_format($totalCost, 0, ',', '.'),
             ], 400);
         }
 
@@ -145,7 +171,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'licenses' => $licenses
+            'licenses' => $licenses,
         ]);
     }
 }

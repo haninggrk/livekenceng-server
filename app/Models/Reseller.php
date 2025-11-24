@@ -36,6 +36,7 @@ class Reseller extends Authenticatable
     public function calculatePrice(float $basePrice): float
     {
         $discount = ($basePrice * $this->discount_percentage) / 100;
+
         return $basePrice - $discount;
     }
 
@@ -81,5 +82,21 @@ class Reseller extends Authenticatable
     public function licenseKeys()
     {
         return $this->hasMany(LicenseKey::class, 'reseller_id');
+    }
+
+    /**
+     * Apps that this reseller can purchase licenses for
+     */
+    public function allowedApps()
+    {
+        return $this->belongsToMany(App::class, 'reseller_app');
+    }
+
+    /**
+     * Check if reseller can purchase licenses for a specific app
+     */
+    public function canPurchaseApp(int $appId): bool
+    {
+        return $this->allowedApps()->where('apps.id', $appId)->exists();
     }
 }

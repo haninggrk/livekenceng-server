@@ -212,6 +212,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance Spent</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount %</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Apps</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Licenses</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -225,9 +226,21 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($reseller->balance_spent ?? 0, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($reseller->profit ?? 0, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $reseller->discount_percentage }}%</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    @if($reseller->allowedApps && $reseller->allowedApps->count() > 0)
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach($reseller->allowedApps as $app)
+                                                <span class="inline-block bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded">{{ $app->display_name }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400">No apps assigned</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $reseller->licenseKeys->count() }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <button onclick="editReseller({{ $reseller->id }})" class="text-primary-600 hover:text-primary-900 mr-3">Edit</button>
+                                    <button onclick="manageResellerApps({{ $reseller->id }})" class="text-blue-600 hover:text-blue-900 mr-3">Manage Apps</button>
                                     <button onclick="addBalanceModal({{ $reseller->id }})" class="text-green-600 hover:text-green-900 mr-3">Add Balance</button>
                                     <button onclick="deleteReseller({{ $reseller->id }})" class="text-red-600 hover:text-red-900">Delete</button>
                                 </td>
@@ -737,6 +750,32 @@
                     Add Balance
                 </button>
                 <button type="button" onclick="closeBalanceModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Manage Reseller Apps Modal -->
+<div id="resellerAppsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h3 id="resellerAppsModalTitle" class="text-2xl font-bold text-gray-900 mb-6">Manage Reseller Apps</h3>
+        <form id="resellerAppsForm">
+            <input type="hidden" id="resellerAppsResellerId">
+            
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Select Apps This Reseller Can Purchase Licenses For</label>
+                <div id="resellerAppsList" class="space-y-2">
+                    <p class="text-gray-500">Loading apps...</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    Save Changes
+                </button>
+                <button type="button" onclick="closeResellerAppsModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
                     Cancel
                 </button>
             </div>
@@ -2363,6 +2402,51 @@
         document.getElementById('balanceModal').classList.remove('flex');
     }
 
+    function manageResellerApps(resellerId) {
+        document.getElementById('resellerAppsResellerId').value = resellerId;
+        document.getElementById('resellerAppsList').innerHTML = '<p class="text-gray-500">Loading apps...</p>';
+        document.getElementById('resellerAppsModal').classList.remove('hidden');
+        document.getElementById('resellerAppsModal').classList.add('flex');
+        
+        fetch(`/admin/resellers/${resellerId}/apps`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const allowedAppIds = data.allowed_apps.map(app => app.id);
+                    const appsList = document.getElementById('resellerAppsList');
+                    appsList.innerHTML = '';
+                    
+                    if (data.all_apps.length === 0) {
+                        appsList.innerHTML = '<p class="text-gray-500">No apps available.</p>';
+                        return;
+                    }
+                    
+                    data.all_apps.forEach(app => {
+                        const isChecked = allowedAppIds.includes(app.id);
+                        const checkbox = document.createElement('div');
+                        checkbox.className = 'flex items-center space-x-2';
+                        checkbox.innerHTML = `
+                            <input type="checkbox" id="app_${app.id}" value="${app.id}" ${isChecked ? 'checked' : ''} 
+                                   class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500">
+                            <label for="app_${app.id}" class="text-sm text-gray-700 cursor-pointer">
+                                ${app.display_name || app.name} <span class="text-gray-400">(${app.identifier})</span>
+                            </label>
+                        `;
+                        appsList.appendChild(checkbox);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading apps:', error);
+                document.getElementById('resellerAppsList').innerHTML = '<p class="text-red-500">Error loading apps. Please try again.</p>';
+            });
+    }
+
+    function closeResellerAppsModal() {
+        document.getElementById('resellerAppsModal').classList.add('hidden');
+        document.getElementById('resellerAppsModal').classList.remove('flex');
+    }
+
     document.getElementById('resellerForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -2398,6 +2482,39 @@
             } else if (data.errors) {
                 alert(Object.values(data.errors).flat().join('\n'));
             }
+        });
+    });
+
+    document.getElementById('resellerAppsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const resellerId = document.getElementById('resellerAppsResellerId').value;
+        const checkboxes = document.querySelectorAll('#resellerAppsList input[type="checkbox"]:checked');
+        const appIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        
+        fetch(`/admin/resellers/${resellerId}/apps`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ app_ids: appIds })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeResellerAppsModal();
+                location.reload();
+            } else if (data.errors) {
+                alert(Object.values(data.errors).flat().join('\n'));
+            } else {
+                alert(data.message || 'An error occurred');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating apps:', error);
+            alert('An error occurred while updating apps');
         });
     });
 

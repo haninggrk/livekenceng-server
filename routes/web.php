@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AppController;
+use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\ShopeeAccountController;
+use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Reseller\AuthController as ResellerAuthController;
 use App\Http\Controllers\Reseller\DashboardController as ResellerDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -19,13 +19,13 @@ Route::get('/download', function () {
     $latestUpdate = \App\Models\SoftwareUpdate::where('is_active', true)
         ->where('is_latest', true)
         ->first();
-    
+
     $previousUpdates = \App\Models\SoftwareUpdate::where('is_active', true)
         ->where('is_latest', false)
         ->orderBy('pub_date', 'desc')
         ->take(10)
         ->get();
-    
+
     return view('download', compact('latestUpdate', 'previousUpdates'));
 })->name('download');
 
@@ -44,11 +44,12 @@ Route::prefix('admin')->group(function () {
 // Protected admin routes
 Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
-    
+
     // Member management routes (AJAX)
     Route::get('/members', [DashboardController::class, 'getMembers']);
     Route::get('/members/{member}', function ($id) {
         $member = \App\Models\Member::findOrFail($id);
+
         return response()->json(['success' => true, 'member' => $member]);
     });
     Route::get('/members/{member}/edit', [DashboardController::class, 'editMember'])->name('admin.members.edit');
@@ -56,7 +57,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/members/{member}', [DashboardController::class, 'update']);
     Route::delete('/members/{member}', [DashboardController::class, 'destroy']);
     Route::post('/members/{member}/reset-password', [DashboardController::class, 'resetPassword']);
-    
+
     // License management routes (AJAX)
     Route::get('/licenses', [DashboardController::class, 'getLicenses']);
     Route::post('/licenses/generate', [DashboardController::class, 'generateLicense']);
@@ -67,23 +68,27 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/plans', [DashboardController::class, 'getPlans']);
     Route::get('/plans/{plan}', function ($id) {
         $plan = \App\Models\LicensePlan::findOrFail($id);
+
         return response()->json(['success' => true, 'plan' => $plan]);
     });
     Route::post('/plans', [DashboardController::class, 'createPlan']);
     Route::put('/plans/{plan}', [DashboardController::class, 'updatePlan']);
     Route::delete('/plans/{plan}', [DashboardController::class, 'deletePlan']);
-    
+
     // Reseller management routes (AJAX)
     Route::get('/resellers', [DashboardController::class, 'getResellers']);
     Route::get('/resellers/{reseller}', function ($id) {
         $reseller = \App\Models\Reseller::findOrFail($id);
+
         return response()->json(['success' => true, 'reseller' => $reseller]);
     });
     Route::post('/resellers', [DashboardController::class, 'createReseller']);
     Route::put('/resellers/{reseller}', [DashboardController::class, 'updateReseller']);
     Route::delete('/resellers/{reseller}', [DashboardController::class, 'deleteReseller']);
     Route::post('/resellers/{reseller}/add-balance', [DashboardController::class, 'addBalance']);
-    
+    Route::get('/resellers/{reseller}/apps', [DashboardController::class, 'getResellerApps']);
+    Route::put('/resellers/{reseller}/apps', [DashboardController::class, 'updateResellerApps']);
+
     // Update management routes
     Route::get('/updates', [UpdateController::class, 'index'])->name('admin.updates.index');
     Route::get('/updates/create', [UpdateController::class, 'create'])->name('admin.updates.create');
@@ -94,7 +99,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::post('/updates/{update}/toggle-active', [UpdateController::class, 'toggleActive'])->name('admin.updates.toggle-active');
     Route::post('/updates/{update}/set-latest', [UpdateController::class, 'setLatest'])->name('admin.updates.set-latest');
     Route::get('/updates-data', [UpdateController::class, 'getUpdates'])->name('admin.updates.data');
-    
+
     // Shopee accounts and Telegram management routes (AJAX)
     Route::get('/shopee-accounts', [ShopeeAccountController::class, 'index']);
     Route::get('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'show']);
@@ -104,7 +109,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'update']);
     Route::delete('/shopee-accounts/{shopeeAccount}', [ShopeeAccountController::class, 'destroy']);
     Route::put('/members/{member}/telegram', [ShopeeAccountController::class, 'updateTelegram']);
-    
+
     // App management routes (AJAX)
     Route::get('/apps', [AppController::class, 'index']);
     Route::get('/apps/{app}', [AppController::class, 'show']);
@@ -112,17 +117,17 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::put('/apps/{app}', [AppController::class, 'update']);
     Route::delete('/apps/{app}', [AppController::class, 'destroy']);
     Route::post('/apps/{app}/toggle-active', [AppController::class, 'toggleActive']);
-    
+
     // Active Livestream routes (AJAX)
     Route::get('/livestreams/active', [DashboardController::class, 'getActiveLivestreams']);
-    
+
     // Niche and Product Set management routes (AJAX)
     Route::get('/members/{member}/niches', [DashboardController::class, 'getMemberNiches']);
     Route::post('/niches', [DashboardController::class, 'createNiche']);
     Route::put('/niches/{niche}', [DashboardController::class, 'updateNiche']);
     Route::delete('/niches/{niche}', [DashboardController::class, 'deleteNiche']);
     Route::get('/niches/{niche}/export', [DashboardController::class, 'exportNicheToCSV']);
-    
+
     Route::get('/members/{member}/product-sets', [DashboardController::class, 'getMemberProductSets']);
     Route::post('/product-sets', [DashboardController::class, 'createProductSet']);
     Route::put('/product-sets/{productSet}', [DashboardController::class, 'updateProductSet']);
@@ -131,7 +136,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/product-sets/{productSet}/items/{item}', [DashboardController::class, 'deleteProductSetItem']);
     Route::delete('/product-sets/{productSet}/items', [DashboardController::class, 'clearProductSetItems']);
     Route::get('/product-sets/{productSet}/export', [DashboardController::class, 'exportProductSetToCSV']);
-    
+
     // Subscription management
     Route::get('/subscriptions/expired', [DashboardController::class, 'getExpiredSubscriptions']);
     Route::get('/subscriptions/expired/export-csv', [DashboardController::class, 'exportExpiredSubscriptionsCsv']);
