@@ -47,7 +47,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-green-100 text-sm font-medium">Active Members</p>
-                        <p class="text-3xl font-bold mt-2" id="activeMembers">{{ $members->filter->isActive()->count() }}</p>
+                        <p class="text-3xl font-bold mt-2" id="activeMembers">{{ $members->filter(function($member) { return $member->isActive() || $member->subscriptions->filter(function($sub) { return $sub->isActive(); })->isNotEmpty(); })->count() }}</p>
                     </div>
                     <div class="bg-white bg-opacity-20 rounded-xl p-3">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,6 +164,8 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telegram</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscriptions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shopee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TikTok</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -1810,10 +1812,26 @@
                 ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${activeSubs}/${totalSubs} Active</span>`
                 : '<span class="text-gray-400 text-xs">No subscriptions</span>';
             
+            // Count Shopee accounts (handle both camelCase and snake_case)
+            const shopeeAccounts = member.shopee_accounts || member.shopeeAccounts || [];
+            const shopeeCount = shopeeAccounts.length;
+            const shopeeBadge = shopeeCount > 0 
+                ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">${shopeeCount}</span>`
+                : '<span class="text-gray-400 text-xs">0</span>';
+            
+            // Count TikTok accounts (handle both camelCase and snake_case)
+            const tiktokAccounts = member.tiktok_accounts || member.tiktokAccounts || [];
+            const tiktokCount = tiktokAccounts.length;
+            const tiktokBadge = tiktokCount > 0 
+                ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">${tiktokCount}</span>`
+                : '<span class="text-gray-400 text-xs">0</span>';
+            
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${member.email}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${member.telegram_username || '-'}</td>
                 <td class="px-6 py-4 whitespace-nowrap">${subsBadge}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${shopeeBadge}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${tiktokBadge}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <a href="/admin/members/${member.id}/edit" class="text-primary-600 hover:text-primary-900 mr-3">Edit</a>
                     <button onclick="deleteMember(${member.id})" class="text-red-600 hover:text-red-900">Delete</button>

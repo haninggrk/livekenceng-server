@@ -27,7 +27,7 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $members = Member::orderBy('created_at', 'desc')->get();
+        $members = Member::with('subscriptions')->orderBy('created_at', 'desc')->get();
 
         $licenseKeys = LicenseKey::with(['member', 'creator', 'reseller', 'app'])
             ->orderBy('created_at', 'desc')
@@ -43,7 +43,7 @@ class DashboardController extends Controller
      */
     public function getMembers(Request $request)
     {
-        $query = Member::with(['licenseKeys', 'subscriptions.app']);
+        $query = Member::with(['licenseKeys', 'subscriptions.app', 'shopeeAccounts', 'tiktokAccounts']);
 
         // Search functionality
         if ($request->has('search') && ! empty($request->search)) {
